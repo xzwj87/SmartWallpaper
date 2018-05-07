@@ -1,0 +1,47 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+    <!--@android:style/Theme.Dialog-->
+    <style name="BottomAnimDialogStyle" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowFrame">@null</item><!--边框-->
+        <item name="android:windowIsFloating">true</item><!--是否浮现在activity之上@android:style/Theme.Dialog-->
+        <item name="android:windowNoTitle">true</item><!--无标题-->
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item><!--背景透明-->
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <!--<item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item>&lt;!&ndash;动画&ndash;&gt;-->
+    </style>
+    <style name="BottomAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item><!--动画-->
+    </style>
+    <style name="ActionSheetDialogAnimation" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_in</item>
+        <item name="android:windowExitAnimation">@anim/bottom_anim_dialog_out</item>
+    </style>
+
+    <style name="ASRDilaog_Theme">
+        <item name="android:windowFrame">@null</item><!--边框-->
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <!--<item name="android:backgroundDimEnabled">true</item>-->
+        <item name="android:windowIsTranslucent">false</item>
+        <!--<item name="android:backgroundDimAmount">0.7</item>-->
+
+    　　<item name="android:windowBackground">@android:color/transparent</item>
+    <!--　　<item name="android:windowIsTranslucent">true</item>-->
+    <!--　　<item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>-->
+        <item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item>
+
+    </style>
+</resources>
