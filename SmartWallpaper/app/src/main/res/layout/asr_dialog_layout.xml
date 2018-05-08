@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:gravity="center" >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+        <LinearLayout
+            android:id="@+id/main_reflect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:orientation="vertical" >
+            <LinearLayout
+                android:id="@+id/recognizing_reflect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <FrameLayout
+                    android:id="@+id/tips_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:paddingTop="20dp" >
+                    <TextView
+                        android:id="@+id/tips_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:gravity="center"
+                        android:textColor="#ff696969"
+                        android:textSize="26sp" />
+                    <TextView
+                        android:id="@+id/tips_wait_net"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:gravity="center"
+                        android:textColor="#ff696969"
+                        android:textSize="18sp" />
+                    <EditText
+                        android:id="@+id/partial_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:cursorVisible="true"
+                        android:hint="@null"
+                        android:inputType="none"
+                        android:maxLines="3"
+                        android:paddingTop="14dp"
+                        android:textColor="#ff696969"
+                        android:textSize="18sp"
+                        android:visibility="gone" />
+                </FrameLayout>
+                <com.samsung.app.smartwallpaper.view.VoiceWaveAnimationView
+                    android:id="@+id/voicewave_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"/>
+                <TextView
+                    android:id="@+id/logo_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:gravity="left"
+                    android:paddingBottom="5dp"
+                    android:paddingLeft="10dip"
+                    android:textColor="#ffd7d7d7"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/suggestion_tips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:gravity="center_horizontal"
+                    android:paddingBottom="5dp"
+                    android:textColor="#ffd7d7d7"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+            <com.samsung.app.smartwallpaper.view.ASRProgressBar
+                android:id="@+id/progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/speak_finish"
+                android:layout_width="match_parent"
+                android:layout_height="49dp"
+                android:gravity="center"
+                android:textSize="18sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/error_reflect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/main_reflect"
+            android:layout_alignBottom="@+id/main_reflect"
+            android:orientation="vertical"
+            android:visibility="invisible" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:gravity="center" />
+            <TextView
+                android:id="@+id/error_tips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="14dp"
+                android:layout_marginRight="14dp"
+                android:background="@null"
+                android:gravity="center"
+                android:textColor="#ff6a6a6a"
+                android:textSize="19sp" />
+            <TextView
+                android:id="@+id/suggestion_tips_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="14dp"
+                android:layout_marginRight="14dp"
+                android:background="@null"
+                android:gravity="center"
+                android:textColor="#ffd7d7d7"
+                android:textSize="19sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+            <TextView
+                android:id="@+id/logo_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:background="@null"
+                android:paddingBottom="5dp"
+                android:paddingLeft="10dip"
+                android:textColor="#ffd7d7d7"
+                android:textSize="14sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="49dp"
+                android:orientation="horizontal" >
+                <TextView
+                    android:id="@+id/cancel_text_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="18sp" />
+                <TextView
+                    android:id="@+id/retry_text_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="重试"
+                    android:textSize="18sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+    <ImageButton
+        android:id="@+id/user_manual"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:padding="2dp"
+        android:scaleType="centerCrop"
+        android:layout_margin="5dp"
+        android:layout_alignParentStart="true"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/help"/>
+    <ImageButton
+        android:id="@+id/main_btn"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:padding="2dp"
+        android:scaleType="centerCrop"
+        android:layout_margin="5dp"
+        android:layout_toEndOf="@+id/user_manual"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/main"/>
+    <ImageButton
+        android:id="@+id/cancel_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/close_v2"
+        android:padding="10dp"/>
+</RelativeLayout>

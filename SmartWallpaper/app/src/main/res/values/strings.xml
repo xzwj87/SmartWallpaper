@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">SmartWallpaper</string>
+    <string name="hint_no_matched">目前壁纸库中无相关壁纸，后续我们会不断加入相关壁纸资源！暂时推荐以下壁纸。感谢您的使用</string>
+    <string name="hint_tag_matched">为您找到了以下 "%s %s %s" 壁纸</string>
+    <string name="hint_notag_matched">为您推荐以下壁纸</string>
+
+    <string name="search_result">搜索结果</string>
+    <string name="tag_search_result">搜索结果(%s)</string>
+    <string name="recommend_result">为您推荐</string>
+</resources>
