@@ -19,6 +19,9 @@
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.autofocus"/>
 
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.hardware.sensor.accelerometer"/>
+
     <application
         android:name=".AppContext"
         android:allowBackup="true"
@@ -50,7 +53,27 @@
 
         <!-- 请确认集成后的包名是否正确，本demo的包名是com.baidu.speech.recognizerdemo，在build.gradle文件中查看 -->
         <service android:name="com.baidu.speech.VoiceRecognitionService" android:exported="false" />
-        <service android:name=".wallpaper.ChangeService" />
+        <service android:name=".wallpaper.ChangeWallpaperService" android:process=":livewallpaper">
+            <intent-filter android:priority="1000" >
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.samsung.app.smartwallpaper.StartTimerChangeWallpaper" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.samsung.app.smartwallpaper.StopTimerChangeWallpaper" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.samsung.app.smartwallpaper.TimerChangeWallpaper" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.samsung.app.smartwallpaper.StartShakeListen" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.samsung.app.smartwallpaper.StopShakeListen" />
+            </intent-filter>
+        </service>
         <service android:name=".wakeup.WakeupService" android:exported="false"/>
         <service
             android:name=".wallpaper.VideoLiveWallpaper"
@@ -90,8 +113,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".WallpaperListActivity" android:theme="@style/BottomAnimStyle"/>
-        <activity android:name=".FavoriteListActivity" android:theme="@style/BottomAnimStyle"/>
+        <activity android:name=".WallpaperListActivity"/>
+        <activity android:name=".FavoriteListActivity"/>
 
         <receiver android:name="com.samsung.app.smartwallpaper.broadcastreceiver.MyBroadcastReceiver" >
             <intent-filter>

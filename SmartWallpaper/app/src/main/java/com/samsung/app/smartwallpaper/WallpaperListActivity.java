@@ -64,7 +64,8 @@ import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_
  * Created by ASUS on 2018/4/22.
  */
 
-public class WallpaperListActivity extends Activity implements View.OnClickListener,WallpaperGridAdapter.CallBack{
+public class WallpaperListActivity extends Activity implements View.OnClickListener,
+        WallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
     private final String TAG = "WallpaperListActivity";
     private Context mContext;
     private View mDecorView;
@@ -277,6 +278,11 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
     }
 
+    @Override
+    public void onExitWallpaperPreview() {
+        hideWallpaperPreview();
+    }
+
     class SpaceItemDecoration extends RecyclerView.ItemDecoration {
 
         int mSpace;
@@ -344,14 +350,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 }else{
                     ((ImageView) v).setImageResource(R.drawable.favorite_on);
                     wallpaperItem.setFavoriteOn(true);
-
-                    Command cmd = new Command();
-                    cmd.setRuleId(RuleId.RULE_ID_5);
-                    cmd.setAction(ACTION_FAVORITE_WALLPAPER);
-                    ArrayList<String> hashCodeList = new ArrayList<>();
-                    hashCodeList.add(wallpaperItem.getHashCode());
-                    cmd.setHashCodeList(hashCodeList);
-                    CommandExecutor.getInstance(mContext).execute(cmd);
+                    SmartWallpaperHelper.favoriteWallpaper(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 }
                 break;
             case R.id.tv_apply:
@@ -468,6 +467,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     @Override
     public void onItemClick(int position) {
         Log.i(TAG, "onItemClick");
+        showWallpaperPreview(position);
     }
 
     @Override
@@ -515,9 +515,10 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     }
 
     public void showWallpaperPreview(int pos) {
-        Log.i(TAG, "show");
+        Log.i(TAG, "showWallpaperPreview");
         mPhotoViewPagerAdapter = new PhotoViewPagerAdapter(mContext);
         mPhotoViewPagerAdapter.setWallpaperItems(mWallpaperItems);
+        mPhotoViewPagerAdapter.setCallBack(this);
         mViewPager.setAdapter(mPhotoViewPagerAdapter);
         mViewPager.setCurrentItem(pos);
         updateWallpaperPreviewUI(pos);
@@ -532,6 +533,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         fl_wallpaper_preview.startAnimation(scaleAnimation);
     }
     public void hideWallpaperPreview(){
+        Log.i(TAG, "hideWallpaperPreview");
         fl_wallpaper_preview.setVisibility(View.GONE);
         mGridAdapter.notifyDataSetChanged();
     }

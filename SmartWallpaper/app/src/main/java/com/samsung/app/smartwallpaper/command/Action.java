@@ -18,4 +18,10 @@ public class Action {
 
     public static final String ACTION_TOUCH_VOTEUP_WALLPAPER = "TouchVoteWallpaper";
     public static final String ACTION_APPLY_WALLPAPER = "ApplyWallpaper";
+
+    public static final String ACTION_START_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.StartTimerChangeWallpaper";
+    public static final String ACTION_STOP_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.StopTimerChangeWallpaper";
+    public static final String ACTION_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.TimerChangeWallpaper";//定时切换壁纸
+    public static final String ACTION_START_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.StartShakeListen"; //开启监听摇一摇
+    public static final String ACTION_STOP_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.StopShakeListen"; //停止监听摇一摇
 }

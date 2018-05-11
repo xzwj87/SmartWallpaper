@@ -3,14 +3,17 @@ package com.samsung.app.smartwallpaper;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.utils.PermisionUtil;
 import com.samsung.app.smartwallpaper.wakeup.WakeupService;
 import com.samsung.app.smartwallpaper.utils.Logger;
 import com.samsung.app.smartwallpaper.utils.StringUtils;
+import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.ConnectivityManager;
@@ -52,6 +55,17 @@ public class AppContext extends Application{
 		Intent intent = new Intent();
 		intent.setClass(this, WakeupService.class);
 		startService(intent);
+
+		SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+		boolean enableChangeWallpaper = sp.getBoolean("enableChangeWallpaper", false);
+		if(enableChangeWallpaper) {
+			intent = new Intent(this, ChangeWallpaperService.class);
+			intent.setAction(Action.ACTION_START_TIMER_CHANGE_WALLPAPER);
+			startService(intent);
+		}else{
+			intent = new Intent(this, ChangeWallpaperService.class);
+			startService(intent);
+		}
 	}
 	
 	/**

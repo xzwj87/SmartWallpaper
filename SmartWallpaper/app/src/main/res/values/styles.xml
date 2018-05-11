@@ -21,10 +21,17 @@
         <item name="android:backgroundDimAmount">0.6</item>
         <!--<item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item>&lt;!&ndash;动画&ndash;&gt;-->
     </style>
-    <style name="BottomAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item><!--动画-->
+    <style name="ActivityWindowAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/WindowEnterAnim</item><!--动画-->
     </style>
-    <style name="ActionSheetDialogAnimation" parent="@android:style/Animation.Dialog">
+    <style name="WindowEnterAnim">
+        <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_in</item>
+    </style>
+    <style name="WindowExitAnim">
+        <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_out</item>
+    </style>
+
+    <style name="DialogWindowAnimStyle" parent="@android:style/Animation.Dialog">
         <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_in</item>
         <item name="android:windowExitAnimation">@anim/bottom_anim_dialog_out</item>
     </style>
@@ -41,7 +48,7 @@
     　　<item name="android:windowBackground">@android:color/transparent</item>
     <!--　　<item name="android:windowIsTranslucent">true</item>-->
     <!--　　<item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>-->
-        <item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item>
+        <item name="android:windowAnimationStyle">@style/DialogWindowAnimStyle</item>
 
     </style>
 </resources>

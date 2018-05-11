@@ -67,7 +67,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
         }else if("arui.alarm.action".equals(action)){
             Intent service = new Intent(context, WakeupService.class);
             context.startService(service);
-            Toast.makeText(context, "AUDIO_BECOMING_NOISY-启动wakeup service",Toast.LENGTH_SHORT).show();
+//            Toast.makeText(context, "AUDIO_BECOMING_NOISY-启动wakeup service",Toast.LENGTH_SHORT).show();
         }
     }
 }

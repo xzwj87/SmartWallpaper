@@ -114,6 +114,10 @@ public class ASRDialog  extends Activity {
     private View mRecognizingView;
     private EditText mInputEdit;
 
+    private ImageButton main_btn;
+    private ImageButton user_manual_btn;
+
+
     private Drawable mBg;
     private StateListDrawable mButtonBg = new StateListDrawable();//说完了
     private StateListDrawable mLeftButtonBg = new StateListDrawable();
@@ -364,6 +368,11 @@ public class ASRDialog  extends Activity {
         Bitmap selfDefineIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
         ShortcutHelper.addShortCut(ASRDialog.this, "拍摄壁纸", selfDefineIcon);
 
+
+        main_btn = (ImageButton) mContentRoot.findViewById(R.id.main_btn);
+        user_manual_btn = (ImageButton) mContentRoot.findViewById(R.id.user_manual_btn);
+        main_btn.setOnClickListener(mClickListener);
+        user_manual_btn.setOnClickListener(mClickListener);
     }
     @Override
     protected void onResume() {
@@ -523,6 +532,15 @@ public class ASRDialog  extends Activity {
 
                     startRecognition();
                     break;
+                case R.id.main_btn:
+                    ApiClient.requestTS("任意换一张壁纸");
+                    if(ASRDialog.getASRDialogInstance() != null){
+                        ASRDialog.getASRDialogInstance().finish();
+                    }
+                    break;
+                case R.id.user_manual_btn:
+
+                    break;
             }
         }
     };
@@ -562,6 +580,8 @@ public class ASRDialog  extends Activity {
 
         mFinishTextView.setText("结束");
         mFinishTextView.setEnabled(true);
+
+        main_btn.setEnabled(true);
     }
 
     protected void onBeginningOfSpeech() {
@@ -579,6 +599,8 @@ public class ASRDialog  extends Activity {
         mTipsTextView.setText("识别中...");
         mFinishTextView.setText("识别中..");
         mFinishTextView.setEnabled(false);
+
+        main_btn.setEnabled(false);
 
         mASRProgressBar.setVisibility(VISIBLE);
         barHandler.sendEmptyMessage(BAR_ONEND);
@@ -658,6 +680,8 @@ public class ASRDialog  extends Activity {
             mErrorTipsTextView.setText(mErrorRes);
             mErrorLayout.setVisibility(VISIBLE);
             mMainLayout.setVisibility(View.INVISIBLE);
+
+            main_btn.setEnabled(true);
         }
         mVoiceWaveView.setVisibility(View.INVISIBLE);
     }

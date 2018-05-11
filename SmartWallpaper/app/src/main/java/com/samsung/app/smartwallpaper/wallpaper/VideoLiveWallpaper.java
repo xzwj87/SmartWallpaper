@@ -48,7 +48,6 @@ public class VideoLiveWallpaper extends WallpaperService {
         public void onCreate(SurfaceHolder surfaceHolder) {
             super.onCreate(surfaceHolder);
             Log.i(TAG, "VideoEngine#onCreate");
-
             IntentFilter intentFilter = new IntentFilter(VIDEO_PARAMS_CONTROL_ACTION);
             registerReceiver(mVideoParamsControlReceiver = new BroadcastReceiver() {
                 @Override

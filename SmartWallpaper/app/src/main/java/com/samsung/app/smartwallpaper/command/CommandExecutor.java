@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.samsung.app.smartwallpaper.ASRDialog;
 import com.samsung.app.smartwallpaper.AppContext;
+import com.samsung.app.smartwallpaper.FavoriteListActivity;
 import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
@@ -78,7 +79,7 @@ public class CommandExecutor {
                     case MSG_FAVORITE_WALLPAPER:
                         if(bundle != null) {
                             String hashcode = bundle.getString("hashcode");
-                            if(SmartWallpaperHelper.getInstance(mContext).favoriteWallpaper(hashcode)){
+                            if(SmartWallpaperHelper.getInstance(mContext).favoriteCurrentWallpaper(hashcode)){
                                 showToast("收藏成功");
                                 return;
                             }
@@ -94,16 +95,18 @@ public class CommandExecutor {
                         });
                         break;
                     case MSG_FAVORITE_WALLPAPER_LIST:
-                        SmartWallpaperHelper.getInstance(mContext).openFavoriteList();
-                        showToast("打开壁纸收藏夹成功");
-                        mMainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(ASRDialog.getASRDialogInstance() != null){
-                                    ASRDialog.getASRDialogInstance().finish();
-                                }
-                            }
-                        });
+//                        SmartWallpaperHelper.getInstance(mContext).openFavoriteList();
+//                        showToast("打开壁纸收藏夹成功");
+//                        mMainHandler.post(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                if(ASRDialog.getASRDialogInstance() != null){
+//                                    ASRDialog.getASRDialogInstance().finish();
+//                                }
+//                            }
+//                        });
+                        Intent intent = new Intent(mContext, FavoriteListActivity.class);
+                        mContext.startActivity(intent);
                         break;
                     case MSG_RESTORE_WALLPAPER:
                         SmartWallpaperHelper.getInstance(mContext).restoreWallpaper();
@@ -140,6 +143,7 @@ public class CommandExecutor {
                             public void run() {
                                 if(ASRDialog.getASRDialogInstance() != null){
                                     ASRDialog.getASRDialogInstance().finish();
+                                    VideoLiveWallpaper.voiceNormal(mContext);
                                 }
                             }
                         });
