@@ -11,6 +11,7 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.ScaleAnimation;
@@ -50,10 +51,13 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
     private WallpaperRecyclerView mRecyclerView;
     private static ArrayList<WallpaperItem> mWallpaperItems = null;
 
+    private static float ratio=2.0f;//屏幕高宽比
+
     public FavoriteWallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
         inflater = LayoutInflater.from(context);
         mRecyclerView = recyclerView;
         mContext = context;
+        ratio = (float)mContext.getResources().getDisplayMetrics().heightPixels/mContext.getResources().getDisplayMetrics().widthPixels;
     }
 
     public void setWallpaperItems(ArrayList<WallpaperItem> wallpaperItems){
@@ -69,7 +73,7 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
     }
 
     @Override
-    public void onBindViewHolder(WallpaperViewHolder holder, int position) {
+    public void onBindViewHolder(final WallpaperViewHolder holder, int position) {
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
 
         holder.fl_item.setTag(position);
@@ -81,6 +85,19 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
         holder.iv_delete.setOnClickListener(this);
         holder.tv_apply.setOnClickListener(this);
         holder.ib_share.setOnClickListener(this);
+
+        holder.iv_wallpaper.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)holder.iv_wallpaper.getLayoutParams();
+                int height = (int)(holder.iv_wallpaper.getMeasuredWidth() * ratio);
+                if(height <= 0){
+                    height = (int)(mContext.getResources().getDisplayMetrics().density * 300);//300dp
+                }
+                layoutParams.height = height;
+                return true;
+            }
+        });
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setTargetView(holder.iv_wallpaper);

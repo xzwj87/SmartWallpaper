@@ -169,8 +169,10 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         mGridAdapter.setCallBack(this);
         mWallpaperRecyclerView.setCallBack(new WallpaperRecyclerView.CallBack() {
             @Override
-            public void close() {
-                FavoriteListActivity.this.finish();
+            public void onSwipe(boolean fromLtoR) {
+                if(fromLtoR) {
+                    FavoriteListActivity.this.finish();
+                }
             }
         });
         mWallpaperRecyclerView.addItemDecoration(new FavoriteListActivity.SpaceItemDecoration(0));

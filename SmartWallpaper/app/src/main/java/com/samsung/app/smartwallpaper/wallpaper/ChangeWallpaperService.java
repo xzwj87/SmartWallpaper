@@ -19,6 +19,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.FileObserver;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
@@ -35,6 +36,10 @@ import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_MY_FAVORITE_WALLPAPER_DIR;
 
@@ -52,34 +57,95 @@ public class ChangeWallpaperService extends Service {
     private Intent intent;
     private PendingIntent pi;
 
-    private SDCardListener listener;
+    private SDCardListener mSDCardListener;
 
     private ArrayList<WallpaperItem> mWallpaperItems;
     private static int curPos = 0;
+    private static int shakeRandomPos = 0;
 
     private SensorManager mSensorManager;
     private Vibrator mVibrator;
     private MediaActionSound mCameraSound;
-    private static final int SENSOR_SHAKE = 10;
-    private boolean isShakeListening= false;
-    private boolean isTimerChanging = false;
+
+    private static final int MSG_LOAD_DONE = 0;
+    private static final int MSG_SENSOR_SHAKE = 1;
+    private static final int MSG_TRIGGER_CHANGE = 2;
+
+
+    private boolean isShakeListening = false;
+    private boolean isTimerChangeRunning = false;
+
+    private HandlerThread mWorkerThread = null;
+    private Handler mHandler = null;
+    private void initWorkerThread() {
+        mWorkerThread = new HandlerThread("worker_thread");
+        mWorkerThread.start();
+        mHandler = new Handler(mWorkerThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                switch (msg.what) {
+                    case MSG_LOAD_DONE:
+
+                        break;
+                    case MSG_SENSOR_SHAKE:
+                        if (!isShakeListening) {
+                            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+                            intent.setAction(Action.ACTION_START_SHAKE_LISTEN);
+                            startService(intent);
+                        } else {
+                            //mVibrator.vibrate(200);
+                            if(mWallpaperItems.size() > 0) {
+                                mHandler.removeMessages(MSG_SENSOR_SHAKE);
+                                mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+                                int random = (int)(Math.random() * mWallpaperItems.size());
+                                if(random == shakeRandomPos){
+                                    shakeRandomPos++;
+                                }else{
+                                    shakeRandomPos = random;
+                                }
+                                Log.d(TAG, "shakeRandomPos="+shakeRandomPos);
+                                WallpaperItem wallpaperItem = mWallpaperItems.get(shakeRandomPos % mWallpaperItems.size());
+                                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaperItem.getWallpaperDrawable());
+                                mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
+                            }
+                        }
+                        break;
+                    case MSG_TRIGGER_CHANGE:
+                        if(mWallpaperItems.size() > 0) {
+                            mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+                            Log.d(TAG, "curPos="+curPos);
+                            WallpaperItem wallpaperItem = mWallpaperItems.get(curPos % mWallpaperItems.size());
+                            SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaperItem.getWallpaperDrawable());
+                            curPos = (curPos + 1) % mWallpaperItems.size();
+                        }
+                        break;
+                }
+            }
+
+        };
+    }
 
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate");
         // TODO Auto-generated method stub
         super.onCreate();
+
         mContext = this;
         mWallpaperItems = new ArrayList<>();
+
+        initWorkerThread();
         loadWallpaperItems();
+
         alarmManager=(AlarmManager)getSystemService(Service.ALARM_SERVICE);
         intent = new Intent(mContext, ChangeWallpaperService.class);
-        intent.setAction(Action.ACTION_TIMER_CHANGE_WALLPAPER);
+        intent.setAction(Action.ACTION_TRIGGER_CHANGE_WALLPAPER);
         // 创建PendingIntent对象
         pi= PendingIntent.getService(mContext, 0, intent, 0);
 
-        listener = new SDCardListener(EXTERNAL_MY_FAVORITE_WALLPAPER_DIR);
-        listener.startWatching();
+        mSDCardListener = new SDCardListener(EXTERNAL_MY_FAVORITE_WALLPAPER_DIR);
+        mSDCardListener.startWatching();
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
@@ -106,22 +172,20 @@ public class ChangeWallpaperService extends Service {
 //                } else {
 //                    alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 5000, pi);
 //                }
-                if(!isTimerChanging) {
-                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1000, pi);
+                if(!isTimerChangeRunning) {
+                    //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1000, pi);
+                    isTimerChangeRunning = true;
+                    executeFixedRate();
                 }
-                isTimerChanging = true;
             }else if(Action.ACTION_STOP_TIMER_CHANGE_WALLPAPER.equals(action)){//停止自动切换壁纸
-                alarmManager.cancel(pi);
-                isTimerChanging = false;
-            }else if(Action.ACTION_TIMER_CHANGE_WALLPAPER.equals(action)){
-                int total = mWallpaperItems.size();
-                if(total > 0){
-                    Log.i(TAG, "onStartCommand-total="+total +", curPos="+curPos);
-                    WallpaperItem wallpaperItem = mWallpaperItems.get(curPos%total);
-                    SmartWallpaperHelper.getInstance(this).setHomeScreenWallpaper(wallpaperItem.getWallpaperDrawable());
-                    curPos = (curPos+1)%total;
+//                alarmManager.cancel(pi);
+                isTimerChangeRunning = false;
+                mScheduledExecutor = null;
+            }else if(Action.ACTION_TRIGGER_CHANGE_WALLPAPER.equals(action)){
+                if(!isTimerChangeRunning) {
+                    isTimerChangeRunning = true;
+                    executeFixedRate();
                 }
-                isTimerChanging = true;
             }else if(Action.ACTION_START_SHAKE_LISTEN.equals(action)){
                 if (mSensorManager != null) {
                     mSensorManager.registerListener(sensorEventListener, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
@@ -141,15 +205,25 @@ public class ChangeWallpaperService extends Service {
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
-        listener.stopWatching();
+        if(mWorkerThread != null) {
+            mWorkerThread.quit();
+            mWorkerThread = null;
+        }
+
+        if(mSDCardListener != null) {
+            mSDCardListener.stopWatching();
+            mSDCardListener = null;
+        }
 
         if(alarmManager != null) {
             alarmManager.cancel(pi);
-            isTimerChanging = false;
+            isTimerChangeRunning = false;
+            alarmManager = null;
         }
         if (mSensorManager != null) {// 取消监听器
             mSensorManager.unregisterListener(sensorEventListener);
             isShakeListening = false;
+            mSensorManager = null;
         }
 
         super.onDestroy();
@@ -205,6 +279,9 @@ public class ChangeWallpaperService extends Service {
             @Override
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
+                mHandler.removeMessages(MSG_LOAD_DONE);
+                mHandler.sendEmptyMessage(MSG_LOAD_DONE);
+
                 if(mWallpaperItems.size() == 0){
                     return;
                 }
@@ -233,25 +310,6 @@ public class ChangeWallpaperService extends Service {
      */
     private SensorEventListener sensorEventListener = new SensorEventListener() {
 
-//        @Override
-//        public void onSensorChanged(SensorEvent event) {
-//            // 传感器信息改变时执行该方法
-//            float[] values = event.values;
-//            float x = values[0]; // x轴方向的重力加速度，向右为正
-//            float y = values[1]; // y轴方向的重力加速度，向前为正
-//            float z = values[2]; // z轴方向的重力加速度，向上为正
-//            Log.i(TAG, "x轴方向的重力加速度" + x +  "；y轴方向的重力加速度" + y +  "；z轴方向的重力加速度" + z);
-//            // 一般在这三个方向的重力加速度达到40就达到了摇晃手机的状态。
-//            int medumValue = 19;// 如果不敏感请自行调低该数值,低于10的话就不行了,因为z轴上的加速度本身就已经达到10了
-//            if (Math.abs(x) > medumValue || Math.abs(y) > medumValue || Math.abs(z) > medumValue) {
-//                vibrator.vibrate(200);
-//                Message msg = new Message();
-//                msg.what = SENSOR_SHAKE;
-//                handler.sendMessage(msg);
-//            }
-//        }
-
-
         /**
          * 检测的时间间隔
          */
@@ -268,7 +326,9 @@ public class ChangeWallpaperService extends Service {
         /**
          * 摇晃检测阈值，决定了对摇晃的敏感程度，越小越敏感。
          */
-        public int shakeThreshold = 2000;
+        public int shakeThreshold = 1500;
+
+        long mLastDetectTime;
 
         @Override
         public void onSensorChanged(SensorEvent event) {
@@ -288,11 +348,12 @@ public class ChangeWallpaperService extends Service {
             mLastY = y;
             mLastZ = z;
             float delta = (float) (Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ) / diffTime * 10000);
-            // 当加速度的差值大于指定的阈值，认为这是一个摇晃
-            if (delta > shakeThreshold) {
-                Message msg = new Message();
-                msg.what = SENSOR_SHAKE;
-                handler.sendMessage(msg);
+            if (delta > shakeThreshold && currentTime - mLastDetectTime >1000) {
+                Log.d(TAG, "shake detect");
+                mLastDetectTime = currentTime;
+                if(!mHandler.hasMessages(MSG_SENSOR_SHAKE)) {
+                    mHandler.sendEmptyMessage(MSG_SENSOR_SHAKE);
+                }
             }
         }
 
@@ -302,28 +363,23 @@ public class ChangeWallpaperService extends Service {
         }
     };
 
-    /**
-     * 动作执行
-     */
-    Handler handler = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case SENSOR_SHAKE:
-                    if(!isShakeListening) {
-                        Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-                        intent.setAction(Action.ACTION_START_SHAKE_LISTEN);
-                        startService(intent);
-                    }else {
-                        //mVibrator.vibrate(200);
-                        mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
-                        startService(intent);
-                    }
-                    break;
-            }
+    private ScheduledExecutorService mScheduledExecutor = null;
+    public void executeFixedRate() {
+        if(mScheduledExecutor == null) {
+            mScheduledExecutor = Executors.newScheduledThreadPool(1);
+            mScheduledExecutor.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if(mWallpaperItems.size() > 0 && isTimerChangeRunning){
+                                mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+                                mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
+                            }
+                        }
+                    },
+                    0,
+                    15000,
+                    TimeUnit.MILLISECONDS);
         }
-
-    };
+    }
 }

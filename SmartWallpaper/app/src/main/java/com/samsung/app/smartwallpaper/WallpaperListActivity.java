@@ -224,8 +224,13 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mGridAdapter.setCallBack(this);
         mWallpaperRecyclerView.setCallBack(new WallpaperRecyclerView.CallBack() {
             @Override
-            public void close() {
-                WallpaperListActivity.this.finish();
+            public void onSwipe(boolean fromLtoR) {
+                if(fromLtoR) {
+                    WallpaperListActivity.this.finish();
+                }else{
+                    Intent intent = new Intent(mContext, FavoriteListActivity.class);
+                    mContext.startActivity(intent);
+                }
             }
         });
         mWallpaperRecyclerView.addItemDecoration(new SpaceItemDecoration(0));

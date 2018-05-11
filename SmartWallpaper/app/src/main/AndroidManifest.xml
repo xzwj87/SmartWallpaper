@@ -65,7 +65,7 @@
                 <action android:name="com.samsung.app.smartwallpaper.StopTimerChangeWallpaper" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.TimerChangeWallpaper" />
+                <action android:name="com.samsung.app.smartwallpaper.TriggerChangeWallpaper" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.samsung.app.smartwallpaper.StartShakeListen" />
