@@ -237,28 +237,34 @@ public class ApiClient {
 				String action = null;
 				String uttSeg = null;
 				int resultcode;
+				Command cmd = new Command();
 				try {
-					JSONObject paramsJsonObj = jsonObject.getJSONObject("parameters");
-					Iterator<String> iterator = paramsJsonObj.keys();
-					while (iterator.hasNext()){
-						String key = iterator.next();
-						String value = paramsJsonObj.getString(key);
-						parameters.put(key, value);
-					}
-
-					JSONArray hashcodeArray = jsonObject.getJSONArray("hashcodelist");
-					for(int i=0;i<hashcodeArray.length();i++){
-						hashcodeList.add(hashcodeArray.getString(i));
-					}
-					JSONArray voteUpCntArray = jsonObject.getJSONArray("voteupcnt_list");
-					for(int i=0;i<voteUpCntArray.length();i++){
-						voteUpCntList.add(voteUpCntArray.getInt(i));
-					}
-
 					ruleId = jsonObject.getString("ruleid");
 					action = jsonObject.getString("action");
 					uttSeg = jsonObject.getString("utt_seg");
 					resultcode = jsonObject.getInt("resultcode");
+					cmd.setRuleId(ruleId);
+					cmd.setAction(action);
+					cmd.setUttSeg(uttSeg);
+					cmd.setResultCode(resultcode);
+
+					if(RuleId.RULE_ID_1.equals(ruleId)){
+						JSONArray hashcodeArray = jsonObject.getJSONArray("hashcodelist");
+						for(int i=0;i<hashcodeArray.length();i++){
+							hashcodeList.add(hashcodeArray.getString(i));
+						}
+						JSONArray voteUpCntArray = jsonObject.getJSONArray("voteupcnt_list");
+						for(int i=0;i<voteUpCntArray.length();i++){
+							voteUpCntList.add(voteUpCntArray.getInt(i));
+						}
+						cmd.setHashCodeList(hashcodeList);
+						cmd.setVoteUpCntList(voteUpCntList);
+
+						HashMap<String, Boolean> extra = new HashMap<>();
+						extra.put("isTagMatched", jsonObject.getBoolean("isTagMatched"));
+						extra.put("isTagPartialMatched", jsonObject.getBoolean("isTagPartialMatched"));
+						cmd.setExtra(extra);
+					}
 
 //					Log.i(TAG, "parameters="+parameters.toString());
 //					Log.i(TAG, "ruleId="+ruleId);
@@ -266,26 +272,18 @@ public class ApiClient {
 //					Log.i(TAG, "hashcodeList="+hashcodeList.toString());
 //					Log.i(TAG, "resultcode="+resultcode);
 
-					Command cmd = new Command();
-					cmd.setRuleId(ruleId);
-					cmd.setAction(action);
-					cmd.setUttSeg(uttSeg);
-					cmd.setHashCodeList(hashcodeList);
-					cmd.setVoteUpCntList(voteUpCntList);
-					cmd.setParams(parameters);
-					cmd.setResultCode(resultcode);
-
-					if(RuleId.RULE_ID_1.equals(cmd.getRuleId())){
-						HashMap<String, Boolean> extra = new HashMap<>();
-						extra.put("isTagMatched", jsonObject.getBoolean("isTagMatched"));
-						extra.put("isTagPartialMatched", jsonObject.getBoolean("isTagPartialMatched"));
-						cmd.setExtra(extra);
+					JSONObject paramsJsonObj = jsonObject.getJSONObject("parameters");
+					Iterator<String> iterator = paramsJsonObj.keys();
+					while (iterator.hasNext()){
+						String key = iterator.next();
+						String value = paramsJsonObj.getString(key);
+						parameters.put(key, value);
 					}
-					return cmd;
+					cmd.setParams(parameters);
 				}catch (Exception e){
 					Log.e(TAG, "error="+e.toString());
 				}
-				return null;
+				return cmd;
 			}
 
 			@Override

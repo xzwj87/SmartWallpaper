@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SmartWallpaper</string>
+    <string name="app_name">智能壁纸</string>
     <string name="hint_no_matched">目前壁纸库中无相关壁纸，后续我们会不断加入相关壁纸资源！暂时推荐以下壁纸。感谢您的使用</string>
     <string name="hint_tag_matched">为您找到了以下 "%s %s %s" 壁纸</string>
     <string name="hint_notag_matched">为您推荐以下壁纸</string>
@@ -7,4 +7,7 @@
     <string name="search_result">搜索结果</string>
     <string name="tag_search_result">搜索结果(%s)</string>
     <string name="recommend_result">为您推荐</string>
+
+    <string name="my_favorite_list">壁纸收藏夹</string>
+    <string name="play_wallpaper">定时切换</string>
 </resources>

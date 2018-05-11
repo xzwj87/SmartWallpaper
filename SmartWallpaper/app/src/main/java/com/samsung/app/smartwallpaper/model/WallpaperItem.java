@@ -34,6 +34,10 @@ public class WallpaperItem {
     private int placeholder = R.drawable.img_placeholder;
     private boolean mHasVoteUp = false;
     private boolean mFavoriteOn = false;
+    private String mPath;
+
+    public WallpaperItem(){
+    }
 
     public WallpaperItem(String hashcode){
         mHashCode = hashcode;
@@ -80,16 +84,31 @@ public class WallpaperItem {
         return mFavoriteOn;
     }
 
+    public void setWallpaperPath(String path){
+        mPath = path;
+    }
+    public String getWallpaperPath(){
+        return mPath;
+    }
+
+    public void setWallpaperDrawable(Drawable wallpaper){
+        mWallpaperDrawable = wallpaper;
+    }
     public Drawable getWallpaperDrawable(){
         return mWallpaperDrawable;
     }
 
     private static String WALLPAPER_FILES_DIR = Environment.getExternalStorageDirectory() + File.separator + "wallpaper_files";
     private AsyncTask<String,Void,Boolean> mLoadTask = null;
-    public void loadWallpaper(String hashcode){
+    public void loadWallpaperByHashCode(String hashcode){
         if(mLoadTask != null){
             mLoadTask.cancel(true);
         }
+
+        if(TextUtils.isEmpty(hashcode)){
+            return;
+        }
+
         mLoadTask = new AsyncTask<String, Void, Boolean>() {
             @Override
             protected void onPreExecute() {
@@ -130,5 +149,39 @@ public class WallpaperItem {
             }
         };
         mLoadTask.executeOnExecutor(THREAD_POOL_EXECUTOR, hashcode);
+    }
+    public void loadWallpaperByPath(String path){
+        if(mLoadTask != null){
+            mLoadTask.cancel(true);
+        }
+        mLoadTask = new AsyncTask<String, Void, Boolean>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                mWallpaperDrawable = null;
+            }
+
+            @Override
+            protected Boolean doInBackground(String... params) {
+                String path = params[0];
+                Bitmap bitmap = BitmapFactory.decodeFile(path);
+                if(bitmap != null){
+                    mWallpaperDrawable = new BitmapDrawable(bitmap);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                super.onPostExecute(success);
+                if(mTargetView != null && success){
+                    mTargetView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    mTargetView.setImageDrawable(mWallpaperDrawable);
+                    mTargetView.invalidate();
+                }
+            }
+        };
+        mLoadTask.executeOnExecutor(THREAD_POOL_EXECUTOR, path);
     }
 }

@@ -169,7 +169,7 @@
         </LinearLayout>
     </RelativeLayout>
     <ImageButton
-        android:id="@+id/user_manual"
+        android:id="@+id/user_manual_btn"
         android:layout_width="26dp"
         android:layout_height="26dp"
         android:padding="2dp"
@@ -185,7 +185,7 @@
         android:padding="2dp"
         android:scaleType="centerCrop"
         android:layout_margin="5dp"
-        android:layout_toEndOf="@+id/user_manual"
+        android:layout_toEndOf="@+id/user_manual_btn"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@drawable/main"/>
     <ImageButton

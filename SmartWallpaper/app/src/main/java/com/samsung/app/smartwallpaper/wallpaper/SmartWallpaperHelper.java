@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -58,7 +57,7 @@ public class SmartWallpaperHelper {
         mContext = context;
         wManager = WallpaperManager.getInstance(context);
 
-        Intent intent = new Intent(mContext, ChangeService.class);
+        Intent intent = new Intent(mContext, ChangeWallpaperService.class);
         pi = PendingIntent.getService(mContext, 0, intent, 0);
 
     }
@@ -69,6 +68,7 @@ public class SmartWallpaperHelper {
 //    }
 
     public synchronized void setLiveWallpaper(Class<?> cls) {
+        Log.d(TAG, "setLiveWallpaper");
         previousWallpaper = getCurrentWallpaper();
         curWallpaper = null;
         final Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
@@ -79,6 +79,7 @@ public class SmartWallpaperHelper {
 
     //设置主屏幕壁纸
     public synchronized boolean setHomeScreenWallpaper(Bitmap wallpaper){
+        Log.d(TAG, "setHomeScreenWallpaper-Bitmap="+wallpaper);
         if(wallpaper == null){
             return false;
         }
@@ -93,6 +94,7 @@ public class SmartWallpaperHelper {
         return true;
     }
     public synchronized boolean setHomeScreenWallpaper(Drawable wallpaper){
+        Log.d(TAG, "setHomeScreenWallpaper-Drawable="+wallpaper);
         if(wallpaper == null){
             return false;
         }
@@ -101,6 +103,7 @@ public class SmartWallpaperHelper {
     }
     //设置锁屏壁纸
     private void setLockScreenWallPaper(Bitmap wallpaper) {
+        Log.d(TAG, "setLockScreenWallPaper-");
         try {
             WallpaperManager mWallManager = WallpaperManager.getInstance(mContext);
             Class class1 = mWallManager.getClass();//获取类名
@@ -111,6 +114,7 @@ public class SmartWallpaperHelper {
         }
     }
     public Bitmap getCurrentWallpaper(){
+        Log.d(TAG, "getCurrentWallpaper");
         Drawable wallpaperDrawable = wManager.getDrawable();
         Bitmap wallpaper = ((BitmapDrawable) wallpaperDrawable).getBitmap();
         return wallpaper;
@@ -191,8 +195,30 @@ public class SmartWallpaperHelper {
 
     public static final String EXTERNAL_MY_FAVORITE_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/壁纸收藏夹";
     public static final String WALLPAPER_FILE_EXT = ".jpg";
-    //收藏壁纸
-    public boolean favoriteWallpaper(String hashcode){
+    public static void saveBitmap(Bitmap bitmap, String dstFileName){
+        try {
+            FileOutputStream fos = new FileOutputStream(dstFileName);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+        }
+    }
+    //收藏指定Drawable的壁纸
+    public static void favoriteWallpaper(Drawable drawable, String hashcode){
+        try {
+            String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
+            BitmapDrawable bitmapDrawable = (BitmapDrawable)drawable;
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+            FileOutputStream fos = new FileOutputStream(filepath);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+        }
+    }
+    //收藏当前壁纸
+    public boolean favoriteCurrentWallpaper(String hashcode){
         Bitmap wallpaper = getCurrentWallpaper();
         if(wallpaper == null) {
             return false;
@@ -212,14 +238,10 @@ public class SmartWallpaperHelper {
         }
         return true;
     }
-    public boolean unFavoriteWallpaper(String hashcode){
-        Bitmap wallpaper = getCurrentWallpaper();
-        if(wallpaper == null) {
-            return false;
-        }
+    public static boolean unFavoriteWallpaper(String hashcode){
         String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
         File file = new File(filepath);
-        if(file.exists()){
+        if(file.exists() && file.isFile()){
             file.delete();
         }
         return true;

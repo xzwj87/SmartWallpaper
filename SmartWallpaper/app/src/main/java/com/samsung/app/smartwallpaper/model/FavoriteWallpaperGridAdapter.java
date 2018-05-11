@@ -21,15 +21,17 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import com.samsung.app.smartwallpaper.R;
 import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.command.RuleId;
+import com.samsung.app.smartwallpaper.utils.FileUtil;
+import com.samsung.app.smartwallpaper.utils.FileUtils;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.util.ArrayList;
+
 import static com.samsung.app.smartwallpaper.command.Action.ACTION_FAVORITE_WALLPAPER;
 import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_WALLPAPER;
 
@@ -38,27 +40,21 @@ import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_
  * Author: my2013.wang@samsung.com
  */
 
-public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdapter.WallpaperViewHolder> implements
+public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteWallpaperGridAdapter.WallpaperViewHolder> implements
         View.OnClickListener{
 
-    private static final String TAG = "WallpaperGridAdapter";
+    private static final String TAG = "FavoriteWallpaperGridAdapter";
 
     private LayoutInflater inflater;
     private Context mContext;
     private WallpaperRecyclerView mRecyclerView;
     private static ArrayList<WallpaperItem> mWallpaperItems = null;
 
-
-    public WallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
+    public FavoriteWallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
         inflater = LayoutInflater.from(context);
         mRecyclerView = recyclerView;
         mContext = context;
     }
-
-    public ArrayList<WallpaperItem> getWallpaperItems(){
-        return mWallpaperItems;
-    }
-
 
     public void setWallpaperItems(ArrayList<WallpaperItem> wallpaperItems){
         mWallpaperItems = wallpaperItems;
@@ -67,7 +63,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
     @Override
     public WallpaperViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = inflater.inflate(R.layout.wallpaper_item_grid, parent , false);
+        View view = inflater.inflate(R.layout.favoritewallpaper_item_grid, parent , false);
         WallpaperViewHolder viewHolder = new WallpaperViewHolder(view);
         return viewHolder;
     }
@@ -77,33 +73,18 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
 
         holder.fl_item.setTag(position);
-        holder.iv_voteup_icon.setTag(position);
-        holder.tv_voteup_count.setTag(position);
-        holder.iv_favorite.setTag(position);
+        holder.iv_delete.setTag(position);
         holder.tv_apply.setTag(position);
         holder.ib_share.setTag(position);
 
-        holder.tv_voteup_count.setText(wallpaperItem.getVoteupCount()+"赞");
-        if(wallpaperItem.hasVoteUp()) {
-            holder.iv_voteup_icon.setImageResource(R.drawable.vote_up_on);
-        }else{
-            holder.iv_voteup_icon.setImageResource(R.drawable.vote_up_off);
-        }
-        if(wallpaperItem.isFavoriteOn()){
-            holder.iv_favorite.setImageResource(R.drawable.favorite_on);
-        }else{
-            holder.iv_favorite.setImageResource(R.drawable.favorite_off);
-        }
-
         holder.fl_item.setOnClickListener(this);
-        holder.iv_voteup_icon.setOnClickListener(this);
-        holder.iv_favorite.setOnClickListener(this);
+        holder.iv_delete.setOnClickListener(this);
         holder.tv_apply.setOnClickListener(this);
         holder.ib_share.setOnClickListener(this);
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setTargetView(holder.iv_wallpaper);
-            wallpaperItem.loadWallpaperByHashCode(wallpaperItem.getHashCode());
+            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperPath());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
             holder.iv_wallpaper.setImageDrawable(wallpaperItem.getWallpaperDrawable());
@@ -124,116 +105,29 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
         return mWallpaperItems.size();
     }
 
-    boolean hasTap = false;
-    boolean doubleTap = false;
     @Override
     public void onClick(final View v) {
         int id = v.getId();
         final int pos = (int)v.getTag();
         final WallpaperItem wallpaperItem = mWallpaperItems.get(pos);
-        ImageView voteUpView = null;
-        TextView tv_voteup_count = null;
-        Command cmd = null;
-        ArrayList<String> hashCodeList = null;
+        ImageView view = null;
         switch (id){
             case R.id.ib_share:
                 SmartWallpaperHelper.getInstance(mContext).shareWallpaper(wallpaperItem.getWallpaperDrawable());
                 break;
             case R.id.fl_item:
-                if(hasTap){//第二次点击
-                    doubleTap = true;
-                }else if(!hasTap){//第一次点击
-                    hasTap = true;
-                    doubleTap = false;
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(!doubleTap){//单击
-                                if(mCb != null) {
-                                    mCb.onItemClick(pos);
-                                }
-                            }else{//双击
-                                if(wallpaperItem.hasVoteUp()){
-                                    doubleTap = false;
-                                    hasTap = false;
-                                    return;
-                                }
-                                //双击
-                                Toast.makeText(mContext,"双击666", Toast.LENGTH_SHORT).show();
-
-                                ImageView voteUpView = v.findViewById(R.id.iv_voteup_icon);
-                                Command cmd = new Command();
-                                cmd.setRuleId(RuleId.RULE_ID_2);
-                                cmd.setAction(ACTION_TOUCH_VOTEUP_WALLPAPER);
-
-                                ArrayList<String> hashCodeList = new ArrayList<>();
-                                hashCodeList.add(wallpaperItem.getHashCode());
-                                cmd.setHashCodeList(hashCodeList);
-                                CommandExecutor.getInstance(mContext).execute(cmd);
-
-                                voteUpView.setImageResource(R.drawable.vote_up_on);
-                                startShakeAnimation(voteUpView);
-                                wallpaperItem.setVoteUpState(true);
-
-                                TextView tv_voteup_count = v.findViewById(R.id.tv_voteup_count);
-                                wallpaperItem.voteUp();
-                                tv_voteup_count.setText(wallpaperItem.getVoteupCount()+"赞");
-
-                                if(mCb != null){
-                                    mCb.onItemVoteUp(pos);
-                                }
-                            }
-                            doubleTap = false;
-                            hasTap = false;
-                        }
-                    }, 250);
-                }
-
-                break;
-            case R.id.iv_voteup_icon:
-                voteUpView = ((ImageView) v);
-                if(wallpaperItem.hasVoteUp()) {
-                    voteUpView.setImageResource(R.drawable.vote_up_off);
-                    wallpaperItem.setVoteUpState(false);
-                }else{
-                    voteUpView.setImageResource(R.drawable.vote_up_on);
-                    startShakeAnimation(voteUpView);
-                    wallpaperItem.setVoteUpState(true);
-
-                    cmd = new Command();
-                    cmd.setRuleId(RuleId.RULE_ID_2);
-                    cmd.setAction(ACTION_TOUCH_VOTEUP_WALLPAPER);
-                    hashCodeList = new ArrayList<>();
-                    hashCodeList.add(wallpaperItem.getHashCode());
-                    cmd.setHashCodeList(hashCodeList);
-                    CommandExecutor.getInstance(mContext).execute(cmd);
-
-                    tv_voteup_count = ((RelativeLayout)v.getParent()).findViewById(R.id.tv_voteup_count);
-                    wallpaperItem.voteUp();
-                    tv_voteup_count.setText(wallpaperItem.getVoteupCount()+"赞");
-                    if(mCb != null){
-                        mCb.onItemVoteUp(pos);
-                    }
+                if(mCb != null) {
+                    mCb.onItemClick(pos);
                 }
                 break;
-            case R.id.iv_favorite:
-                if(wallpaperItem.isFavoriteOn()){
-                    ((ImageView) v).setImageResource(R.drawable.favorite_off);
-                    wallpaperItem.setFavoriteOn(false);
-                    CommandExecutor.getInstance(mContext).executeUnFavoriteTask(wallpaperItem.getHashCode());
-                }else{
-                    ((ImageView) v).setImageResource(R.drawable.favorite_on);
-                    startScaleAnimation(v);
-                    wallpaperItem.setFavoriteOn(true);
-
-                    SmartWallpaperHelper.favoriteWallpaper(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
-
-                    if(mCb != null){
-                        mCb.onItemFavorite(pos);
-                    }
-                }
+            case R.id.iv_delete:
+                startShakeAnimation(v);
+                FileUtils.deleteFileWithPath(wallpaperItem.getWallpaperPath());
+                mWallpaperItems.remove(pos);
+                notifyDataSetChanged();
                 break;
             case R.id.tv_apply:
+                startScaleAnimation(v);
                 CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
                 break;
         }
@@ -275,7 +169,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                 targetView.setScaleY(1.0f);
             }
             @Override
-            public void onAnimationEnd(android.animation.Animator animation) {
+            public void onAnimationEnd(Animator animation) {
                 targetView.setAlpha(1f);
                 targetView.setTranslationX(0f);
                 targetView.setTranslationY(0f);
@@ -324,9 +218,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
     public static class WallpaperViewHolder extends RecyclerView.ViewHolder{
         FrameLayout fl_item;
         ImageView iv_wallpaper;
-        ImageView iv_voteup_icon;
-        TextView tv_voteup_count;
-        ImageView iv_favorite;
+        ImageView iv_delete;
         TextView tv_apply;
         ImageButton ib_share;
 
@@ -334,9 +226,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
             super(itemView);
             fl_item = (FrameLayout)itemView.findViewById(R.id.fl_item);
             iv_wallpaper = (ImageView)itemView.findViewById(R.id.iv_wallpaper);
-            iv_voteup_icon = (ImageView)itemView.findViewById(R.id.iv_voteup_icon);
-            tv_voteup_count = (TextView)itemView.findViewById(R.id.tv_voteup_count);
-            iv_favorite = (ImageView)itemView.findViewById(R.id.iv_favorite);
+            iv_delete = (ImageView)itemView.findViewById(R.id.iv_delete);
             tv_apply = (TextView)itemView.findViewById(R.id.tv_apply);
             ib_share = (ImageButton)itemView.findViewById(R.id.ib_share);
         }

@@ -46,6 +46,24 @@
             android:layout_marginStart="8dp"
             android:src="@drawable/favorite_off"/>
         <TextView
+            android:id="@+id/tv_marquee"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:layout_above="@+id/tv_apply"
+            android:layout_alignEnd="@+id/tv_apply"
+            android:layout_marginBottom="10dp"
+            android:paddingEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingTop="5dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:text="跑马灯"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp"/>
+        <TextView
             android:id="@+id/tv_apply"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
