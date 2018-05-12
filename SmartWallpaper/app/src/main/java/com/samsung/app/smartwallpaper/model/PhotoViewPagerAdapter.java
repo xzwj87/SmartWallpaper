@@ -10,6 +10,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
 import com.samsung.app.smartwallpaper.WallpaperListActivity;
@@ -50,6 +51,8 @@ public class PhotoViewPagerAdapter extends PagerAdapter {
         final DragPhotoView dragPhotoView = new DragPhotoView(mContext);
         dragPhotoView.setTag(position);
         dragPhotoView.setZoomable(true);
+        dragPhotoView.setMinScale(0.8f);
+
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setTargetView(dragPhotoView);
             if(TextUtils.isEmpty(wallpaperItem.getWallpaperPath())) {

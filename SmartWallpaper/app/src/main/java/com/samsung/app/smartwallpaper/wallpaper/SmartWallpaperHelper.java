@@ -138,8 +138,8 @@ public class SmartWallpaperHelper {
     }
 
 
-    public static final String TEMP_DIR = Environment.getExternalStorageDirectory() + "/smartwallpaper/";
-    public static final String TEMP_WALLPAPER = TEMP_DIR + "temp.png";
+    public static final String EXTERNAL_TEMP_DIR = Environment.getExternalStorageDirectory() + "/.smartwallpaper";
+    public static final String TEMP_WALLPAPER = EXTERNAL_TEMP_DIR + "/temp.png";
     public boolean saveWallpaper(Drawable wallpaperDrawable){
         Log.i(TAG, "saveCurWallpaper");
         Bitmap wallpaper = ((BitmapDrawable) wallpaperDrawable).getBitmap();
@@ -147,7 +147,7 @@ public class SmartWallpaperHelper {
             return false;
         }
         try {
-            File file = new File(TEMP_DIR);
+            File file = new File(EXTERNAL_TEMP_DIR);
             if(!file.exists()){
                 file.mkdirs();
             }
@@ -194,6 +194,7 @@ public class SmartWallpaperHelper {
 
 
     public static final String EXTERNAL_MY_FAVORITE_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/壁纸收藏夹";
+    public static final String EXTERNAL_UPLOAD_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/.smartwallpaper/uploads";
     public static final String WALLPAPER_FILE_EXT = ".jpg";
     public static void saveBitmap(Bitmap bitmap, String dstFileName){
         try {

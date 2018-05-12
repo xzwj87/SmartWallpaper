@@ -2,11 +2,14 @@ package com.samsung.app.smartwallpaper.command;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,7 +24,15 @@ import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 import com.samsung.app.smartwallpaper.wallpaper.VideoLiveWallpaper;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+
+import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_MY_FAVORITE_WALLPAPER_DIR;
+import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_UPLOAD_WALLPAPER_DIR;
+import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.WALLPAPER_FILE_EXT;
+import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.saveBitmap;
 
 /**
  * Created by ASUS on 2018/4/23.
@@ -296,11 +307,13 @@ public class CommandExecutor {
     }
 
     public void executeTask(Runnable r){
+        Log.i(TAG, "executeTask");
         mThreadHandler.post(r);
     }
 
     private Runnable applyWallpaperTask;
     public void executeApplyWallpaperTask(final Drawable drawable){
+        Log.i(TAG, "executeApplyWallpaperTask");
         if(applyWallpaperTask != null){
             mThreadHandler.removeCallbacks(applyWallpaperTask);
         }
@@ -316,11 +329,56 @@ public class CommandExecutor {
     }
 
     public void executeUnFavoriteTask(final String hashcode){
+        Log.i(TAG, "executeUnFavoriteTask");
         executeTask(new Runnable() {
             @Override
             public void run() {
                 SmartWallpaperHelper.getInstance(mContext).unFavoriteWallpaper(hashcode);
                 showToast("取消收藏成功");
+            }
+        });
+    }
+
+    public void uploadWallpaperTask(final String picturePath){
+        Log.i(TAG, "uploadWallpaperTask");
+        executeTask(new Runnable() {
+            @Override
+            public void run() {
+                Bitmap wallpaper = wallpaper = BitmapFactory.decodeFile(picturePath);
+                if(wallpaper != null) {
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                    Date date = new Date(System.currentTimeMillis());
+
+                    int idx = picturePath.lastIndexOf(".");
+                    String ext = picturePath.substring(idx);
+                    if (TextUtils.isEmpty(ext)) {
+                        ext = WALLPAPER_FILE_EXT;
+                    }
+
+                    idx = picturePath.lastIndexOf("/");
+                    String src_filename = picturePath.substring(idx+1);
+                    Log.i(TAG, "src_filename="+src_filename);
+
+                    File dir = new File(EXTERNAL_UPLOAD_WALLPAPER_DIR);
+                    if(!dir.exists()){
+                        dir.mkdirs();
+                    }
+                    String dstFilePath = EXTERNAL_UPLOAD_WALLPAPER_DIR + File.separator + src_filename;//EXTERNAL_UPLOAD_WALLPAPER_DIR + File.separator + simpleDateFormat.format(date) + ext;
+                    File file = new File(dstFilePath);
+                    if(!file.exists()){
+                        Log.i(TAG, "saveBitmap");
+                        SmartWallpaperHelper.saveBitmap(wallpaper, dstFilePath);
+                    }
+                    Log.i(TAG, "dstFilePath="+dstFilePath);
+                    if(ApiClient.uploadWallpaper(dstFilePath)){
+                        showToast("上传壁纸成功");
+                    }else{
+                        showToast("上传壁纸失败");
+                    }
+
+                }else{
+                    showToast("上传壁纸失败");
+                }
             }
         });
     }

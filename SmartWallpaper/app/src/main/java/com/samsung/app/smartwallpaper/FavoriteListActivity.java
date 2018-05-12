@@ -46,6 +46,7 @@ import com.samsung.app.smartwallpaper.model.FavoriteWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
+import com.samsung.app.smartwallpaper.network.ApiClient;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
@@ -362,26 +363,8 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
 
-            Bitmap wallpaper = null;
-            try {
-                wallpaper = BitmapFactory.decodeFile(picturePath);
-            }catch (Exception e){
-                Log.e(TAG, "error="+e.toString());
-            }
-            if(wallpaper != null) {
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                Date date = new Date(System.currentTimeMillis());
-
-                int idx = picturePath.lastIndexOf(".");
-                String ext = picturePath.substring(idx);
-                if (TextUtils.isEmpty(ext)) {
-                    ext = ".jpg";
-                }
-                saveBitmap(wallpaper, EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + simpleDateFormat.format(date) + ext);
-                showHint("正在上传...");
-            }else{
-                showHint("壁纸文件获取失败！");
-            }
+            CommandExecutor.getInstance(mContext).uploadWallpaperTask(picturePath);
+            showHint("正在上传...");
         }
     }
 

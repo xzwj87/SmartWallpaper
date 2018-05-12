@@ -158,24 +158,31 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                 if(hasTap){//第二次点击
                     doubleTap = true;
                 }else if(!hasTap){//第一次点击
+                    if(wallpaperItem.hasVoteUp()){
+                        doubleTap = false;
+                        hasTap = false;
+                        if(mCb != null) {
+                            mCb.onItemClick(pos);
+                        }
+                        return;
+                    }
                     hasTap = true;
                     doubleTap = false;
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            if(!doubleTap){//单击
+                            if(!doubleTap){//单击，250ms内监测到一次点击
                                 if(mCb != null) {
                                     mCb.onItemClick(pos);
                                 }
-                            }else{//双击
+                            }else{//双击，250ms内监测到两次点击
                                 if(wallpaperItem.hasVoteUp()){
                                     doubleTap = false;
                                     hasTap = false;
                                     return;
                                 }
-                                //双击
-                                Toast.makeText(mContext,"双击666", Toast.LENGTH_SHORT).show();
 
+                                //双击点赞
                                 ImageView voteUpView = v.findViewById(R.id.iv_voteup_icon);
                                 Command cmd = new Command();
                                 cmd.setRuleId(RuleId.RULE_ID_2);
@@ -196,6 +203,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
                                 if(mCb != null){
                                     mCb.onItemVoteUp(pos);
+                                    Toast.makeText(mContext,"双击666", Toast.LENGTH_SHORT).show();
                                 }
                             }
                             doubleTap = false;
