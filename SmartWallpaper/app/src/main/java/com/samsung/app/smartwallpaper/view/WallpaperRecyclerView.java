@@ -13,7 +13,7 @@ import android.view.MotionEvent;
 
 public class WallpaperRecyclerView extends RecyclerView{
     private final static String TAG = "WallpaperRecyclerView";
-    float touchDownY, latestX, latestY, diffY;
+    float touchDownX, touchDownY, latestX, latestY, diffX, diffY;
     long downTime,diffTime;
     private CallBack mCb;
 
@@ -37,31 +37,35 @@ public class WallpaperRecyclerView extends RecyclerView{
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean dispatchTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                touchDownX = event.getX();
                 touchDownY = event.getY();
                 downTime = event.getEventTime();
                 break;
             case MotionEvent.ACTION_UP:
                 latestX = event.getX();
                 latestY = event.getY();
-                float slope = Math.abs(latestY/latestX);
+                diffX = latestX - touchDownX;
                 diffY = latestY - touchDownY;
                 diffTime = event.getEventTime() - downTime;
-                if(diffY > 700 && diffTime < 400 && slope >1 && !canScrollVertically(-1)){
-                    Log.d(TAG, "onTouchEvent-ACTION_UP-need to dismiss dialog");
+                if(diffX > 400 && diffTime < 600 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(-1)){
                     if(mCb != null) {
-                        //mCb.close();
+                        mCb.onSwipe(true);
+                    }
+                }else if(diffX < -400 && diffTime < 600 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(1)){
+                    if(mCb != null) {
+                        mCb.onSwipe(false);
                     }
                 }
                 break;
         }
-        return super.onTouchEvent(event);
+        return super.dispatchTouchEvent(event);
     }
 
     public interface CallBack{
-        void close();
+        void onSwipe(boolean fromLtoR);
     }
 
     public void setCallBack(CallBack cb){

@@ -158,6 +158,7 @@ public class ASRDialog  extends Activity {
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         mContext = this;
         mASRDialog = this;
@@ -686,6 +687,15 @@ public class ASRDialog  extends Activity {
         mVoiceWaveView.setVisibility(View.INVISIBLE);
     }
 
+    private String refineResult(String result){
+        result = result.replace("万一张", "换一张");
+        result = result.replace("万张", "万张");
+        result = result.replace("换装", "换张");
+        result = result.replace("万一张", "换一张");
+        result = result.replace("b", "壁");
+        return result;
+    }
+
     protected void onPartialResults(String[] results) {
         Log.i(TAG, "onPartialResults");
         if (results != null) {
@@ -695,7 +705,7 @@ public class ASRDialog  extends Activity {
                     mWaitNetTextView.setVisibility(View.INVISIBLE);
                     mTipsTextView.setVisibility(View.INVISIBLE);
                 }
-                mInputEdit.setText(results[0]);
+                mInputEdit.setText(refineResult(results[0]));
                 mInputEdit.setSelection(mInputEdit.getText().length());
                 delayTime = 0;
             }
@@ -710,7 +720,7 @@ public class ASRDialog  extends Activity {
                     mWaitNetTextView.setVisibility(View.INVISIBLE);
                     mTipsTextView.setVisibility(View.INVISIBLE);
                 }
-                mInputEdit.setText(results[0]);
+                mInputEdit.setText(refineResult(results[0]));
                 mInputEdit.setSelection(mInputEdit.getText().length());
                 delayTime = 0;
             }
@@ -818,7 +828,8 @@ public class ASRDialog  extends Activity {
             list.addAll(Arrays.asList(results));
             intentResult.putStringArrayListExtra("results", list);
             setResult(RESULT_OK, intentResult);
-            ApiClient.requestTS(results[0]);
+
+            ApiClient.requestTS(mInputEdit.getText().toString());
 //            finish();
         }
         @Override

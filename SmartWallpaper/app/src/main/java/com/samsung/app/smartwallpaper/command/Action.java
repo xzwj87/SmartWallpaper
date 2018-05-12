@@ -15,13 +15,17 @@ public class Action {
     public static final String ACTION_EDIT_WALLPAPER = "EditWallpaper";
     public static final String ACTION_SELFDEFINE_WALLPAPER = "SelfDefineWallpaper";
     public static final String ACTION_LIVE_WALLPAPER = "LiveWallpaper";
+    public static final String ACTION_SHAKE_WALLPAPER_ON = "ShakeWallpaperOn";
+    public static final String ACTION_SHAKE_WALLPAPER_Off = "ShakeWallpaperOff";
+    public static final String ACTION_SCHEDULE_WALLPAPER_ON = "ScheduleWallpaperOn";
+    public static final String ACTION_SCHEDULE_WALLPAPER_OFF = "ScheduleWallpaperOff";
 
     public static final String ACTION_TOUCH_VOTEUP_WALLPAPER = "TouchVoteWallpaper";
     public static final String ACTION_APPLY_WALLPAPER = "ApplyWallpaper";
 
-    public static final String ACTION_START_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.StartTimerChangeWallpaper";
-    public static final String ACTION_STOP_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.StopTimerChangeWallpaper";
-    public static final String ACTION_TIMER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.TimerChangeWallpaper";//定时切换壁纸
-    public static final String ACTION_START_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.StartShakeListen"; //开启监听摇一摇
-    public static final String ACTION_STOP_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.StopShakeListen"; //停止监听摇一摇
+    public static final String ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.EnableScheduleChangeWallpaper";
+    public static final String ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.DisableScheduleChangeWallpaper";
+    public static final String ACTION_TRIGGER_CHANGE_WALLPAPER = "com.samsung.app.smartwallpaper.TriggerChangeWallpaper";//定时切换壁纸
+    public static final String ACTION_ENABLE_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.EnableShakeListen"; //开启监听摇一摇
+    public static final String ACTION_DISABLE_SHAKE_LISTEN = "com.samsung.app.smartwallpaper.DisableShakeListen"; //停止监听摇一摇
 }

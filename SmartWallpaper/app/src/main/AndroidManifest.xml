@@ -53,25 +53,25 @@
 
         <!-- 请确认集成后的包名是否正确，本demo的包名是com.baidu.speech.recognizerdemo，在build.gradle文件中查看 -->
         <service android:name="com.baidu.speech.VoiceRecognitionService" android:exported="false" />
-        <service android:name=".wallpaper.ChangeWallpaperService" android:process=":livewallpaper">
+        <service android:name=".wallpaper.ChangeWallpaperService" android:exported="true" >
             <intent-filter android:priority="1000" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.StartTimerChangeWallpaper" />
+                <action android:name="com.samsung.app.smartwallpaper.EnableScheduleChangeWallpaper" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.StopTimerChangeWallpaper" />
+                <action android:name="com.samsung.app.smartwallpaper.DisableScheduleChangeWallpaper" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.TimerChangeWallpaper" />
+                <action android:name="com.samsung.app.smartwallpaper.TriggerChangeWallpaper" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.StartShakeListen" />
+                <action android:name="com.samsung.app.smartwallpaper.EnableShakeListen" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.samsung.app.smartwallpaper.StopShakeListen" />
+                <action android:name="com.samsung.app.smartwallpaper.DisableShakeListen" />
             </intent-filter>
         </service>
         <service android:name=".wakeup.WakeupService" android:exported="false"/>

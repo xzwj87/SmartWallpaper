@@ -1,5 +1,6 @@
 package com.samsung.app.smartwallpaper;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ import com.samsung.app.smartwallpaper.utils.Logger;
 import com.samsung.app.smartwallpaper.utils.StringUtils;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -20,58 +22,65 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 public class AppContext extends Application{
-	private boolean isLogin = false;	//登录状态
-	private int loginUid = 0;	//登录用户的id
-	private Logger logger = Logger.getLogger(AppContext.class);
-	public static boolean gifRunning = true;//gif是否运行
-	
-	private String saveImagePath;//保存图片路径
-
 	public static Context appContext;
 	
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		appContext = this;
-		logger.i("Application starts");
-//        Thread.setDefaultUncaughtExceptionHandler(AppException.getAppExceptionHandler());
         init();
 	}
 
 	private void init(){
-		//检测读写权限
 		startService();
-
-		//设置保存图片的路径
-		saveImagePath = getProperty(AppConfig.SAVE_IMAGE_PATH);
-		if(StringUtils.isEmpty(saveImagePath)){
-			setProperty(AppConfig.SAVE_IMAGE_PATH, AppConfig.DEFAULT_SAVE_IMAGE_PATH);
-			saveImagePath = AppConfig.DEFAULT_SAVE_IMAGE_PATH;
-		}
 	}	
 	
 	private void startService(){
-		logger.i("start IMService");
 		Intent intent = new Intent();
 		intent.setClass(this, WakeupService.class);
 		startService(intent);
 
 		SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-		boolean enableChangeWallpaper = sp.getBoolean("enableChangeWallpaper", false);
+		boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
 		if(enableChangeWallpaper) {
 			intent = new Intent(this, ChangeWallpaperService.class);
-			intent.setAction(Action.ACTION_START_TIMER_CHANGE_WALLPAPER);
+			intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
 			startService(intent);
 		}else{
+			//仅仅只是启动服务
+			if(!isServiceRunning(ChangeWallpaperService.class.getName())) {
+				intent = new Intent(this, ChangeWallpaperService.class);
+				startService(intent);
+			}
+		}
+
+		boolean enableShakeListen = sp.getBoolean("enableShakeListen", false);
+		if(enableShakeListen) {
 			intent = new Intent(this, ChangeWallpaperService.class);
+			intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
 			startService(intent);
+		}else{
+			//仅仅只是启动服务
+			if(!isServiceRunning(ChangeWallpaperService.class.getName())) {
+				intent = new Intent(this, ChangeWallpaperService.class);
+				startService(intent);
+			}
 		}
 	}
-	
+
 	/**
-	 * 获取App安装包信息
-	 * @return
+	 * 判断服务是否运行
 	 */
+	private boolean isServiceRunning(final String className) {
+		ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		List<ActivityManager.RunningServiceInfo> info = activityManager.getRunningServices(Integer.MAX_VALUE);
+		if (info == null || info.size() == 0) return false;
+		for (ActivityManager.RunningServiceInfo aInfo : info) {
+			if (className.equals(aInfo.service.getClassName())) return true;
+		}
+		return false;
+	}
+
 	public PackageInfo getPackageInfo() {
 		PackageInfo info = null;
 		try { 
@@ -82,11 +91,7 @@ public class AppContext extends Application{
 		if(info == null) info = new PackageInfo();
 		return info;
 	}
-	
-	/**
-	 * 获取App唯一标识
-	 * @return
-	 */
+
 	public String getAppId() {
 		String uniqueID = this.getPackageName();
 		if(StringUtils.isEmpty(uniqueID)){
@@ -119,30 +124,4 @@ public class AppContext extends Application{
 	public void removeProperty(String...key){
 		AppConfig.getAppConfig(this).remove(key);
 	}
-
-	/**
-	 * 是否启动检查更新
-	 * @return
-	 */
-	public boolean isCheckUp()
-	{
-		String perf_checkup = "true";
-		//默认是开启
-		if(StringUtils.isEmpty(perf_checkup))
-			return true;
-		else
-			return StringUtils.toBool(perf_checkup);
-	}
-	
-	/**
-	 * 检测网络是否可用
-	 * @return
-	 */
-	public boolean isNetworkConnected() {
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo ni = cm.getActiveNetworkInfo();
-		return ni != null && ni.isConnectedOrConnecting();
-	}
-
-
 }
