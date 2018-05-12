@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -25,10 +26,12 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.samsung.app.smartwallpaper.ASRDialog;
 import com.samsung.app.smartwallpaper.FavoriteListActivity;
 import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
@@ -38,6 +41,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -53,7 +57,6 @@ public class ChangeWallpaperService extends Service {
     private Context mContext;
 
     //定义当前所显示的壁纸
-    private AlarmManager alarmManager;
     private Intent intent;
     private PendingIntent pi;
 
@@ -71,14 +74,13 @@ public class ChangeWallpaperService extends Service {
     private static final int MSG_SENSOR_SHAKE = 1;
     private static final int MSG_TRIGGER_CHANGE = 2;
 
-
-    private boolean isShakeListening = false;
-    private boolean isTimerChangeRunning = false;
+    private boolean isScheduleRunning = false;
+    private boolean isLoadDone = false;
 
     private HandlerThread mWorkerThread = null;
     private Handler mHandler = null;
     private void initWorkerThread() {
-        mWorkerThread = new HandlerThread("worker_thread");
+        mWorkerThread = new HandlerThread("change_wallpaper_thread");
         mWorkerThread.start();
         mHandler = new Handler(mWorkerThread.getLooper()) {
             @Override
@@ -86,29 +88,24 @@ public class ChangeWallpaperService extends Service {
                 super.handleMessage(msg);
                 switch (msg.what) {
                     case MSG_LOAD_DONE:
-
+                        isLoadDone = true;
+                        Log.d(TAG, "load done, mWallpaperItems.size()="+mWallpaperItems.size());
                         break;
                     case MSG_SENSOR_SHAKE:
-                        if (!isShakeListening) {
-                            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-                            intent.setAction(Action.ACTION_START_SHAKE_LISTEN);
-                            startService(intent);
-                        } else {
-                            //mVibrator.vibrate(200);
-                            if(mWallpaperItems.size() > 0) {
-                                mHandler.removeMessages(MSG_SENSOR_SHAKE);
-                                mHandler.removeMessages(MSG_TRIGGER_CHANGE);
-                                int random = (int)(Math.random() * mWallpaperItems.size());
-                                if(random == shakeRandomPos){
-                                    shakeRandomPos++;
-                                }else{
-                                    shakeRandomPos = random;
-                                }
-                                Log.d(TAG, "shakeRandomPos="+shakeRandomPos);
-                                WallpaperItem wallpaperItem = mWallpaperItems.get(shakeRandomPos % mWallpaperItems.size());
-                                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaperItem.getWallpaperDrawable());
-                                mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
+                        //mVibrator.vibrate(200);
+                        if(mWallpaperItems.size() > 0) {
+                            mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
+                            mHandler.removeMessages(MSG_SENSOR_SHAKE);
+                            mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+                            int random = (int)(Math.random() * mWallpaperItems.size());
+                            if(random == shakeRandomPos){
+                                shakeRandomPos++;
+                            }else{
+                                shakeRandomPos = random;
                             }
+                            Log.d(TAG, "shakeRandomPos="+shakeRandomPos);
+                            WallpaperItem wallpaperItem = mWallpaperItems.get(shakeRandomPos % mWallpaperItems.size());
+                            SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaperItem.getWallpaperDrawable());
                         }
                         break;
                     case MSG_TRIGGER_CHANGE:
@@ -122,7 +119,6 @@ public class ChangeWallpaperService extends Service {
                         break;
                 }
             }
-
         };
     }
 
@@ -138,7 +134,6 @@ public class ChangeWallpaperService extends Service {
         initWorkerThread();
         loadWallpaperItems();
 
-        alarmManager=(AlarmManager)getSystemService(Service.ALARM_SERVICE);
         intent = new Intent(mContext, ChangeWallpaperService.class);
         intent.setAction(Action.ACTION_TRIGGER_CHANGE_WALLPAPER);
         // 创建PendingIntent对象
@@ -151,10 +146,6 @@ public class ChangeWallpaperService extends Service {
         mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         mCameraSound = new MediaActionSound();
         mCameraSound.load(MediaActionSound.SHUTTER_CLICK);
-        if (mSensorManager != null) {
-            mSensorManager.registerListener(sensorEventListener, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-            isShakeListening = true;
-        }
     }
 
     @Override
@@ -163,39 +154,35 @@ public class ChangeWallpaperService extends Service {
 
         if(intent != null){
             String action = intent.getAction();
-            Toast.makeText(this, "onStartCommand-action="+action, Toast.LENGTH_SHORT).show();
-            if(Action.ACTION_START_TIMER_CHANGE_WALLPAPER.equals(action)){//启动自动切换壁纸
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+5000, pi);
-//                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//                    alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), pi);
-//                } else {
-//                    alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 5000, pi);
-//                }
-                if(!isTimerChangeRunning) {
-                    //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1000, pi);
-                    isTimerChangeRunning = true;
-                    executeFixedRate();
+            if(!TextUtils.isEmpty(action)) {
+                Toast.makeText(this, "onStartCommand-action=" + action, Toast.LENGTH_SHORT).show();
+                if (Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER.equals(action)) {//启动自动切换壁纸
+                    if (mWallpaperItems.size() == 0 && isLoadDone) {
+                        Toast.makeText(this, "收藏夹中还没有壁纸，先收藏一些壁纸吧", Toast.LENGTH_SHORT).show();
+                        if(ASRDialog.getASRDialogInstance() != null){
+                            ASRDialog.getASRDialogInstance().finish();
+                        }
+                    } else {
+                        if (!isScheduleRunning) {
+                            initScheduleAndRun();
+                        }else{
+                            Toast.makeText(mContext, "定时切换壁纸【已开启】", Toast.LENGTH_SHORT).show();
+                            if(ASRDialog.getASRDialogInstance() != null){
+                                ASRDialog.getASRDialogInstance().finish();
+                            }
+                        }
+                    }
+                } else if (Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER.equals(action)) {//停止自动切换壁纸
+                    stopScheduleJob();
+                } else if (Action.ACTION_TRIGGER_CHANGE_WALLPAPER.equals(action)) {
+                    if (!isScheduleRunning) {
+                        initScheduleAndRun();
+                    }
+                } else if (Action.ACTION_ENABLE_SHAKE_LISTEN.equals(action)) {
+                    enableShakeListen(true);
+                } else if (Action.ACTION_DISABLE_SHAKE_LISTEN.equals(action)) {
+                    enableShakeListen(false);
                 }
-            }else if(Action.ACTION_STOP_TIMER_CHANGE_WALLPAPER.equals(action)){//停止自动切换壁纸
-//                alarmManager.cancel(pi);
-                isTimerChangeRunning = false;
-                mScheduledExecutor = null;
-            }else if(Action.ACTION_TRIGGER_CHANGE_WALLPAPER.equals(action)){
-                if(!isTimerChangeRunning) {
-                    isTimerChangeRunning = true;
-                    executeFixedRate();
-                }
-            }else if(Action.ACTION_START_SHAKE_LISTEN.equals(action)){
-                if (mSensorManager != null) {
-                    mSensorManager.registerListener(sensorEventListener, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-                    isShakeListening = true;
-                }
-            }else if(Action.ACTION_STOP_SHAKE_LISTEN.equals(action)){
-                if (mSensorManager != null) {
-                    mSensorManager.unregisterListener(sensorEventListener);
-                }
-                isShakeListening = false;
             }
         }
         return START_STICKY;
@@ -209,20 +196,13 @@ public class ChangeWallpaperService extends Service {
             mWorkerThread.quit();
             mWorkerThread = null;
         }
-
         if(mSDCardListener != null) {
             mSDCardListener.stopWatching();
             mSDCardListener = null;
         }
-
-        if(alarmManager != null) {
-            alarmManager.cancel(pi);
-            isTimerChangeRunning = false;
-            alarmManager = null;
-        }
+        releaseSchedule();
         if (mSensorManager != null) {// 取消监听器
-            mSensorManager.unregisterListener(sensorEventListener);
-            isShakeListening = false;
+            enableShakeListen(false);
             mSensorManager = null;
         }
 
@@ -246,6 +226,7 @@ public class ChangeWallpaperService extends Service {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
+                isLoadDone = false;
             }
 
             @Override
@@ -305,9 +286,73 @@ public class ChangeWallpaperService extends Service {
             }
         }
     }
-    /**
-     * 重力感应监听
-     */
+
+
+    private ScheduledExecutorService mScheduledExecutor = null;
+    private Future mFuture = null;
+    private void initScheduleAndRun() {
+        Log.d(TAG, "initScheduleAndRun");
+        if(mScheduledExecutor == null) {
+            mScheduledExecutor = Executors.newScheduledThreadPool(1);
+            mFuture = mScheduledExecutor.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if(mWallpaperItems.size() > 0 && isScheduleRunning){
+                                mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+                                mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
+                            }
+                        }
+                    },
+                    0,
+                    15000, //每隔15s切换一次
+                    TimeUnit.MILLISECONDS);
+            startScheduleJob();
+        }
+    }
+    private void startScheduleJob(){
+        Log.d(TAG, "startScheduleJob-"+ASRDialog.getASRDialogInstance());
+        isScheduleRunning = true;
+        if(ASRDialog.getASRDialogInstance() != null){
+            ASRDialog.getASRDialogInstance().finish();
+        }
+
+        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("enableScheduleChangeWallpaper", true);
+        editor.apply();
+
+        Toast.makeText(this, "【启动】定时切换壁纸", Toast.LENGTH_SHORT).show();
+    }
+    private void stopScheduleJob(){
+        Log.d(TAG, "stopScheduleJob");
+        isScheduleRunning = false;
+        if(ASRDialog.getASRDialogInstance() != null){
+            ASRDialog.getASRDialogInstance().finish();
+        }
+
+        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("enableScheduleChangeWallpaper", false);
+        editor.apply();
+
+        Toast.makeText(this, "【关闭】定时切换壁纸", Toast.LENGTH_SHORT).show();
+
+    }
+    private void releaseSchedule() {
+        Log.d(TAG, "releaseSchedule");
+        stopScheduleJob();
+
+        if(mFuture != null){
+            mFuture.cancel(true);
+            mFuture = null;
+        }
+        if(mScheduledExecutor != null){
+            mScheduledExecutor.shutdown();
+            mScheduledExecutor = null;
+        }
+    }
+
     private SensorEventListener sensorEventListener = new SensorEventListener() {
 
         /**
@@ -362,24 +407,26 @@ public class ChangeWallpaperService extends Service {
 
         }
     };
-
-    private ScheduledExecutorService mScheduledExecutor = null;
-    public void executeFixedRate() {
-        if(mScheduledExecutor == null) {
-            mScheduledExecutor = Executors.newScheduledThreadPool(1);
-            mScheduledExecutor.scheduleAtFixedRate(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            if(mWallpaperItems.size() > 0 && isTimerChangeRunning){
-                                mHandler.removeMessages(MSG_TRIGGER_CHANGE);
-                                mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
-                            }
-                        }
-                    },
-                    0,
-                    15000,
-                    TimeUnit.MILLISECONDS);
+    private void enableShakeListen(boolean enable){
+        if(mSensorManager == null){
+            mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         }
+        if(ASRDialog.getASRDialogInstance() != null){
+            ASRDialog.getASRDialogInstance().finish();
+        }
+
+        if(enable){
+            mSensorManager.registerListener(sensorEventListener, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+            Toast.makeText(this, "【启动】摇一摇换壁纸", Toast.LENGTH_SHORT).show();
+        }else{
+            mSensorManager.unregisterListener(sensorEventListener);
+            Toast.makeText(this, "【关闭】摇一摇换壁纸", Toast.LENGTH_SHORT).show();
+        }
+
+        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("enableShakeListen", enable);
+        editor.apply();
     }
+
 }

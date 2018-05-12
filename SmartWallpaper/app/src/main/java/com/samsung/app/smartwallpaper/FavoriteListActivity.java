@@ -119,31 +119,22 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
                 Intent intent = new Intent(FavoriteListActivity.this, ChangeWallpaperService.class);
                 if(isChecked){
                     //启动切换壁纸
-                    if (isServiceRunning(ChangeWallpaperService.class.getName())){
-                        Toast.makeText(mContext, "已开启自动切换壁纸服务", Toast.LENGTH_SHORT).show();
-//                        return;
-                    }else{
-                        Toast.makeText(mContext, "自动切换壁纸服务开启", Toast.LENGTH_SHORT).show();
-                    }
-                    intent.setAction(Action.ACTION_START_TIMER_CHANGE_WALLPAPER);
+                    intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
                     startService(intent);
                 }else{
-                    intent.setAction(Action.ACTION_STOP_TIMER_CHANGE_WALLPAPER);
+                    intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
                     startService(intent);
-
-                    stopService(intent);
-                    Toast.makeText(mContext, "自动切换壁纸服务关闭", Toast.LENGTH_SHORT).show();
                 }
 
                 SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sp.edit();
-                editor.putBoolean("enableChangeWallpaper", isChecked);
+                editor.putBoolean("enableScheduleChangeWallpaper", isChecked);
                 editor.apply();
             }
         });
         SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-        boolean enableChangeWallpaper = sp.getBoolean("enableChangeWallpaper", false);
-        if(enableChangeWallpaper || isServiceRunning(ChangeWallpaperService.class.getName())){
+        boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
+        if(enableChangeWallpaper){
             play_wallpaper.setChecked(true);
         }else{
             play_wallpaper.setChecked(false);
@@ -202,19 +193,6 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
 
             }
         });
-    }
-
-    /**
-     * 判断服务是否运行
-     */
-    private boolean isServiceRunning(final String className) {
-        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningServiceInfo> info = activityManager.getRunningServices(Integer.MAX_VALUE);
-        if (info == null || info.size() == 0) return false;
-        for (ActivityManager.RunningServiceInfo aInfo : info) {
-            if (className.equals(aInfo.service.getClassName())) return true;
-        }
-        return false;
     }
 
     AsyncTask<String, Void, String> mLoadTask;

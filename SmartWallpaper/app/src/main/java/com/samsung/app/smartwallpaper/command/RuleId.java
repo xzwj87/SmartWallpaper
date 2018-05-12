@@ -15,4 +15,8 @@ public class RuleId {
     public static final String RULE_ID_8 = "#smartwallpaper%smartwallpaper_8";
     public static final String RULE_ID_9 = "#smartwallpaper%smartwallpaper_9";
     public static final String RULE_ID_10 = "#smartwallpaper%smartwallpaper_10";
+    public static final String RULE_ID_11 = "#smartwallpaper%smartwallpaper_11";
+    public static final String RULE_ID_12 = "#smartwallpaper%smartwallpaper_12";
+    public static final String RULE_ID_13 = "#smartwallpaper%smartwallpaper_13";
+    public static final String RULE_ID_14 = "#smartwallpaper%smartwallpaper_14";
 }

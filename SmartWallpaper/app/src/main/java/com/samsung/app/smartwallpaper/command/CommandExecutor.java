@@ -17,6 +17,7 @@ import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
 import com.samsung.app.smartwallpaper.wallpaper.CameraLiveWallpaper;
+import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 import com.samsung.app.smartwallpaper.wallpaper.VideoLiveWallpaper;
 
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 
 /**
  * Created by ASUS on 2018/4/23.
+ * 换壁纸 服务
  */
 
 public class CommandExecutor {
@@ -44,7 +46,7 @@ public class CommandExecutor {
     }
     private CommandExecutor(Context context){
         mContext = context;
-        mHandlerThread = new HandlerThread("command_handler");
+        mHandlerThread = new HandlerThread("command_handler_thread");
         mHandlerThread.start();
         mThreadHandler = new Handler(mHandlerThread.getLooper()){
             @Override
@@ -176,10 +178,14 @@ public class CommandExecutor {
     private static final int MSG_EDIT_WALLPAPER = 0x106;
     private static final int MSG_SELFDEFINE_WALLPAPER = 0x107;
     private static final int MSG_LIVE_WALLPAPER = 0x108;
+    private static final int MSG_SHAKE_WALLPAPER_ON = 0x109;
+    private static final int MSG_SHAKE_WALLPAPER_OFF = 0x10A;
+    private static final int MSG_SCHEDULE_WALLPAPER_ON = 0x10A;
+    private static final int MSG_SCHEDULE_WALLPAPER_OFF = 0x10A;
 
-    private static final int MSG_APPLY_WALLPAPER = 0x108;
+    private static final int MSG_APPLY_WALLPAPER = 0x200;
 
-    //
+    //run on Main thread
     public boolean execute(final Command cmd){
         Log.i(TAG, "execute-cmd="+cmd.toString());
         boolean handled = false;
@@ -260,6 +266,30 @@ public class CommandExecutor {
         }else if(RuleId.RULE_ID_10.equals(cmd.getRuleId())){//LiveWallpaper
             //设置视频动画壁纸
             mThreadHandler.sendEmptyMessage(MSG_LIVE_WALLPAPER);
+            handled = true;
+        }else if(RuleId.RULE_ID_11.equals(cmd.getRuleId())){
+            //打开摇一摇换壁纸功能
+            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+            intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
+            mContext.startService(intent);
+            handled = true;
+        }else if(RuleId.RULE_ID_12.equals(cmd.getRuleId())){
+            //关闭摇一摇换壁纸功能
+            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+            intent.setAction(Action.ACTION_DISABLE_SHAKE_LISTEN);
+            mContext.startService(intent);
+            handled = true;
+        }else if(RuleId.RULE_ID_13.equals(cmd.getRuleId())){
+            //打开自动换壁纸功能
+            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+            intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
+            mContext.startService(intent);
+            handled = true;
+        }else if(RuleId.RULE_ID_14.equals(cmd.getRuleId())){
+            //关闭自动换壁纸功能
+            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+            intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
+            mContext.startService(intent);
             handled = true;
         }
         return handled;
