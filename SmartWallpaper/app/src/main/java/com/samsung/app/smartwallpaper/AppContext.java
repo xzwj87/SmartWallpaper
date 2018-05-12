@@ -45,6 +45,7 @@ public class AppContext extends Application{
 		if(enableChangeWallpaper) {
 			intent = new Intent(this, ChangeWallpaperService.class);
 			intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
+			intent.putExtra("first_time", true);
 			startService(intent);
 		}else{
 			//仅仅只是启动服务
@@ -58,6 +59,7 @@ public class AppContext extends Application{
 		if(enableShakeListen) {
 			intent = new Intent(this, ChangeWallpaperService.class);
 			intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
+			intent.putExtra("first_time", true);
 			startService(intent);
 		}else{
 			//仅仅只是启动服务
