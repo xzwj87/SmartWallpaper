@@ -183,6 +183,8 @@ public class ChangeWallpaperService extends Service {
                 } else if (Action.ACTION_DISABLE_SHAKE_LISTEN.equals(action)) {
                     enableShakeListen(false);
                 }
+            }else{
+                loadWallpaperItems();
             }
         }
         return START_STICKY;
@@ -242,17 +244,23 @@ public class ChangeWallpaperService extends Service {
                         return false;
                     }
                 });
-
-                for(File child:files){
-                    WallpaperItem item = new WallpaperItem();
-                    item.setWallpaperPath(child.getAbsolutePath());
-                    Bitmap bitmap = BitmapFactory.decodeFile(child.getAbsolutePath());
-                    if(bitmap != null){
-                        Drawable wallpaperDrawable = new BitmapDrawable(bitmap);
-                        item.setWallpaperDrawable(wallpaperDrawable);
+                if(files!=null && files.length > 0) {
+                    for (File child : files) {
+                        WallpaperItem item = new WallpaperItem();
+                        item.setWallpaperPath(child.getAbsolutePath());
+                        Bitmap bitmap = null;
+                        try {
+                            bitmap = BitmapFactory.decodeFile(child.getAbsolutePath());
+                        } catch (Exception e) {
+                            Log.e(TAG, "error=" + e.toString());
+                        }
+                        if (bitmap != null) {
+                            Drawable wallpaperDrawable = new BitmapDrawable(bitmap);
+                            item.setWallpaperDrawable(wallpaperDrawable);
+                        }
+                        mWallpaperItems.add(item);
+                        Log.i(TAG, "mWallpaperItems.add-child.getAbsolutePath()=" + child.getAbsolutePath());
                     }
-                    mWallpaperItems.add(item);
-                    Log.i(TAG,"mWallpaperItems.add-child.getAbsolutePath()="+child.getAbsolutePath());
                 }
                 return null;
             }

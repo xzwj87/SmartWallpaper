@@ -207,6 +207,10 @@ public class SmartWallpaperHelper {
     //收藏指定Drawable的壁纸
     public static void favoriteWallpaper(Drawable drawable, String hashcode){
         try {
+            File dir = new File(EXTERNAL_MY_FAVORITE_WALLPAPER_DIR);
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
             String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
             BitmapDrawable bitmapDrawable = (BitmapDrawable)drawable;
             Bitmap bitmap = bitmapDrawable.getBitmap();

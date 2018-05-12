@@ -128,7 +128,11 @@ public class WallpaperItem {
                     Log.i(TAG, "relative_path=" + relative_path);
                     if(!TextUtils.isEmpty(relative_path)) {
                         String full_path = WALLPAPER_FILES_DIR + File.separator + relative_path;
-                        bitmap = BitmapFactory.decodeFile(full_path);
+                        try {
+                            bitmap = BitmapFactory.decodeFile(full_path);
+                        }catch (Exception e){
+                            Log.e(TAG, "error="+e.toString());
+                        }
                         if(bitmap != null){
                             mWallpaperDrawable = new BitmapDrawable(bitmap);
                             return true;
@@ -164,7 +168,12 @@ public class WallpaperItem {
             @Override
             protected Boolean doInBackground(String... params) {
                 String path = params[0];
-                Bitmap bitmap = BitmapFactory.decodeFile(path);
+                Bitmap bitmap = null;
+                try {
+                    bitmap = BitmapFactory.decodeFile(path);
+                }catch (Exception e){
+                    Log.e(TAG, "error="+e.toString());
+                }
                 if(bitmap != null){
                     mWallpaperDrawable = new BitmapDrawable(bitmap);
                     return true;

@@ -290,7 +290,7 @@ public class ApiClient {
 			protected void onPostExecute(Command cmd) {
 				super.onPostExecute(cmd);
 				boolean handled = false;
-				if(cmd != null) {
+				if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
 					Toast.makeText(AppContext.appContext, "Command:"+ cmd.toString(), Toast.LENGTH_SHORT).show();
 					handled = CommandExecutor.getInstance(AppContext.appContext).execute(cmd);
 				}else{

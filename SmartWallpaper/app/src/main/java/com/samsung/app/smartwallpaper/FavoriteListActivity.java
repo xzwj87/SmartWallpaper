@@ -223,12 +223,13 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
                         return false;
                     }
                 });
-
-                for(File child:files){
-                    WallpaperItem item = new WallpaperItem();
-                    item.setWallpaperPath(child.getAbsolutePath());
-                    mWallpaperItems.add(item);
-                    Log.i(TAG,"mWallpaperItems.add-child.getAbsolutePath()="+child.getAbsolutePath());
+                if(files != null && files.length>0) {
+                    for (File child : files) {
+                        WallpaperItem item = new WallpaperItem();
+                        item.setWallpaperPath(child.getAbsolutePath());
+                        mWallpaperItems.add(item);
+                        Log.i(TAG, "mWallpaperItems.add-child.getAbsolutePath()=" + child.getAbsolutePath());
+                    }
                 }
                 return null;
             }
@@ -361,17 +362,26 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
 
-            Bitmap wallpaper = BitmapFactory.decodeFile(picturePath);
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-            Date date = new Date(System.currentTimeMillis());
-
-            int idx = picturePath.lastIndexOf(".");
-            String ext = picturePath.substring(idx);
-            if(TextUtils.isEmpty(ext)){
-                ext = ".jpg";
+            Bitmap wallpaper = null;
+            try {
+                wallpaper = BitmapFactory.decodeFile(picturePath);
+            }catch (Exception e){
+                Log.e(TAG, "error="+e.toString());
             }
-            saveBitmap(wallpaper, EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + simpleDateFormat.format(date) + ext);
-            showHint("正在上传...");
+            if(wallpaper != null) {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+                Date date = new Date(System.currentTimeMillis());
+
+                int idx = picturePath.lastIndexOf(".");
+                String ext = picturePath.substring(idx);
+                if (TextUtils.isEmpty(ext)) {
+                    ext = ".jpg";
+                }
+                saveBitmap(wallpaper, EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + simpleDateFormat.format(date) + ext);
+                showHint("正在上传...");
+            }else{
+                showHint("壁纸文件获取失败！");
+            }
         }
     }
 
