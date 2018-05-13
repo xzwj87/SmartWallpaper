@@ -1,6 +1,7 @@
 package com.samsung.app.smartwallpaper.wallpaper;
 
 import android.app.AlarmManager;
+import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -23,6 +24,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -307,7 +309,7 @@ public class ChangeWallpaperService extends Service {
                     new Runnable() {
                         @Override
                         public void run() {
-                            if(mWallpaperItems.size() > 0 && isScheduleRunning){
+                            if(mWallpaperItems.size() > 0 && isScheduleRunning && !shouldIgnore()){
                                 mHandler.removeMessages(MSG_TRIGGER_CHANGE);
                                 mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
                             }
@@ -408,7 +410,7 @@ public class ChangeWallpaperService extends Service {
             if (delta > shakeThreshold && currentTime - mLastDetectTime >1000) {
                 Log.d(TAG, "shake detect");
                 mLastDetectTime = currentTime;
-                if(!mHandler.hasMessages(MSG_SENSOR_SHAKE)) {
+                if(!mHandler.hasMessages(MSG_SENSOR_SHAKE) && !shouldIgnore()) {
                     mHandler.sendEmptyMessage(MSG_SENSOR_SHAKE);
                 }
             }
@@ -443,4 +445,17 @@ public class ChangeWallpaperService extends Service {
         }
     }
 
+    private KeyguardManager mKeyguardManager;
+    private PowerManager mPowerManager;
+    private boolean shouldIgnore() {
+        if (mKeyguardManager == null) {
+            mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        }
+        if (mPowerManager == null) {
+            mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        }
+        boolean ignore = !mPowerManager.isScreenOn();
+        ignore |= mKeyguardManager.inKeyguardRestrictedInputMode();
+        return ignore;
+    }
 }
