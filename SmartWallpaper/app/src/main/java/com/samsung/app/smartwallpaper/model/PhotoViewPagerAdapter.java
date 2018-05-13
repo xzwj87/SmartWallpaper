@@ -54,7 +54,7 @@ public class PhotoViewPagerAdapter extends PagerAdapter {
         dragPhotoView.setMinScale(0.8f);
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
-            wallpaperItem.setTargetView(dragPhotoView);
+            wallpaperItem.setWallpaperView(dragPhotoView);
             if(TextUtils.isEmpty(wallpaperItem.getWallpaperPath())) {
                 wallpaperItem.loadWallpaperByHashCode(wallpaperItem.getHashCode());
             }else{

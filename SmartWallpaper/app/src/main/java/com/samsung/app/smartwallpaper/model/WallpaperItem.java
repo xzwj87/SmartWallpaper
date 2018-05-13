@@ -10,6 +10,7 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.samsung.app.smartwallpaper.R;
 import com.samsung.app.smartwallpaper.config.UrlConstant;
@@ -30,7 +31,7 @@ public class WallpaperItem {
     private String mHashCode;
     private int mVoteUpCount=0;
     private Drawable mWallpaperDrawable;
-    private ImageView mTargetView;
+
     private int placeholder = R.drawable.img_placeholder;
     private boolean mHasVoteUp = false;
     private boolean mFavoriteOn = false;
@@ -64,11 +65,17 @@ public class WallpaperItem {
         mVoteUpCount++;
     }
 
-    public void setTargetView(ImageView imageView){
-        mTargetView = imageView;
-        if(mTargetView != null){
-            mTargetView.setScaleType(ImageView.ScaleType.CENTER);
-            mTargetView.setImageResource(placeholder);
+    private TextView mVoteUpView;
+    public void setVoteUpView(TextView textView){
+        mVoteUpView = textView;
+    }
+
+    private ImageView mWallpaperView;
+    public void setWallpaperView(ImageView imageView){
+        mWallpaperView = imageView;
+        if(mWallpaperView != null){
+            mWallpaperView.setScaleType(ImageView.ScaleType.CENTER);
+            mWallpaperView.setImageResource(placeholder);
         }
     }
     public void setVoteUpState(boolean voteUp){
@@ -145,10 +152,10 @@ public class WallpaperItem {
             @Override
             protected void onPostExecute(Boolean success) {
                 super.onPostExecute(success);
-                if(mTargetView != null && success){
-                    mTargetView.setScaleType(ImageView.ScaleType.FIT_XY);
-                    mTargetView.setImageDrawable(mWallpaperDrawable);
-                    mTargetView.invalidate();
+                if(mWallpaperView != null && success){
+                    mWallpaperView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    mWallpaperView.setImageDrawable(mWallpaperDrawable);
+                    mWallpaperView.invalidate();
                 }
             }
         };
@@ -184,13 +191,37 @@ public class WallpaperItem {
             @Override
             protected void onPostExecute(Boolean success) {
                 super.onPostExecute(success);
-                if(mTargetView != null && success){
-                    mTargetView.setScaleType(ImageView.ScaleType.FIT_XY);
-                    mTargetView.setImageDrawable(mWallpaperDrawable);
-                    mTargetView.invalidate();
+                if(mWallpaperView != null && success){
+                    mWallpaperView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    mWallpaperView.setImageDrawable(mWallpaperDrawable);
+                    mWallpaperView.invalidate();
                 }
             }
         };
         mLoadTask.executeOnExecutor(THREAD_POOL_EXECUTOR, path);
+    }
+    public void loadVoteUpCount(String hashcode){
+        new AsyncTask<String, Void, Integer>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+            @Override
+            protected Integer doInBackground(String... params) {
+                String hashcode = params[0];
+                return ApiClient.getVoteUpCount(hashcode);
+            }
+
+            @Override
+            protected void onPostExecute(Integer count) {
+                super.onPostExecute(count);
+                setVoteupCount(count);
+                if(mVoteUpView != null){
+                    mVoteUpView.setText(count+"赞");
+                    mVoteUpView.invalidate();
+                }
+            }
+        }.executeOnExecutor(THREAD_POOL_EXECUTOR, hashcode);
     }
 }

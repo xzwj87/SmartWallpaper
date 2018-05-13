@@ -22,7 +22,7 @@ public class UrlConstant {
     public final static String HOST_URL_TS = "http://" + HOST + ":" + PORT_TS + File.separator;
     public final static String HOST_URL_WRS = "http://" + HOST + ":" + PORT_WRS + File.separator;
 
-
+    public final static String GET_WALLPAPER_VOTEUP_COUNT_URL = HOST_URL_WRS + "api/getwallpapervoteupcount/hashcode=";
     public final static String GET_WALLPAPER_FILE_PATH_URL = HOST_URL_WRS + "api/getwallpaperfilepath/hashcode=";
     public final static String DOWNLOAD_WALLPAPER_URL = HOST_URL_WRS + "api/downloadwallpaper/hashcode=";
     public final static String VOTEUP_WALLPAPER_URL = HOST_URL_WRS + "api/voteupwallpaper/hashcode=";

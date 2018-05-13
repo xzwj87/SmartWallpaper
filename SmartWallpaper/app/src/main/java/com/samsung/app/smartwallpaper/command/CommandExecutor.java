@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.samsung.app.smartwallpaper.ASRDialog;
 import com.samsung.app.smartwallpaper.AppContext;
 import com.samsung.app.smartwallpaper.FavoriteListActivity;
+import com.samsung.app.smartwallpaper.UploadListActivity;
 import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
@@ -376,6 +377,8 @@ public class CommandExecutor {
                                     }
                                 }
                                 showToast("上传壁纸成功");
+                                Intent intent = new Intent(mContext, UploadListActivity.class);
+                                mContext.startActivity(intent);
                                 return;
                             }
                         }catch (Exception e){

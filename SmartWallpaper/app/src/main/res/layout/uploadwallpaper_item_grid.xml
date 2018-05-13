@@ -8,17 +8,6 @@
     android:clickable="true"
     android:focusable="true"
     android:id="@+id/fl_item">
-    <TextView
-        android:id="@+id/tv_my_uploads"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="@string/view_my_upload_list"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:textSize="28sp"/>
     <ImageView
         android:id="@+id/iv_wallpaper"
         android:layout_width="match_parent"
@@ -45,14 +34,26 @@
         android:gravity="bottom"
         android:paddingBottom="4dp">
         <ImageView
-            android:id="@+id/iv_delete"
+            android:id="@+id/iv_voteup_icon"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:layout_marginStart="5dp"
             android:layout_alignParentStart="true"
             android:layout_alignParentBottom="true"
-            android:src="@drawable/delete"
+            android:src="@drawable/vote_up_off"
             android:scaleType="centerCrop"/>
+        <TextView
+            android:id="@+id/tv_voteup_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:gravity="left"
+            android:minWidth="15dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp"/>
         <TextView
             android:id="@+id/tv_apply"
             android:layout_width="wrap_content"

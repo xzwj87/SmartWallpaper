@@ -118,7 +118,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
         });
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
-            wallpaperItem.setTargetView(holder.iv_wallpaper);
+            wallpaperItem.setWallpaperView(holder.iv_wallpaper);
             wallpaperItem.loadWallpaperByHashCode(wallpaperItem.getHashCode());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -258,6 +258,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                 }
                 break;
             case R.id.tv_apply:
+                startScaleAnimation(v);
                 CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
                 break;
         }

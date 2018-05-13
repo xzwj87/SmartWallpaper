@@ -1,30 +1,20 @@
 package com.samsung.app.smartwallpaper;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -32,47 +22,33 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
-import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
-import com.samsung.app.smartwallpaper.model.FavoriteWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
-import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
+import com.samsung.app.smartwallpaper.model.UploadWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
-import com.samsung.app.smartwallpaper.network.ApiClient;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
-import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_MY_FAVORITE_WALLPAPER_DIR;
-import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.saveBitmap;
+import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_UPLOAD_WALLPAPER_DIR;
 
-public class FavoriteListActivity extends Activity  implements View.OnClickListener,
-        FavoriteWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
-    private static final String TAG = "FavoriteListActivity";
+public class UploadListActivity extends Activity  implements View.OnClickListener,
+        UploadWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
+    private static final String TAG = "UploadListActivity";
     private Context mContext;
 
     private TextView tv_title;
-    private Switch play_wallpaper;
     private ImageButton ib_upload;
     private ImageButton ib_close;
 
@@ -82,7 +58,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
     private WallpaperRecyclerView mWallpaperRecyclerView;
 
     private GridLayoutManager mGridLayoutManager = null;
-    private FavoriteWallpaperGridAdapter mGridAdapter = null;
+    private UploadWallpaperGridAdapter mGridAdapter = null;
     private ArrayList<WallpaperItem> mWallpaperItems;
 
     private FrameLayout fl_wallpaper_preview;
@@ -98,7 +74,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         mContext = this;
 
         mWallpaperItems = new ArrayList<>();
-        setContentView(R.layout.favorite_list_layout);
+        setContentView(R.layout.upload_list_layout);
         initView();
         loadWallpaperItems();
     }
@@ -109,34 +85,6 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         }
 
         tv_title = (TextView)findViewById(R.id.tv_title);
-        play_wallpaper = (Switch)findViewById(R.id.play_wallpaper);
-        play_wallpaper.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                Toast.makeText(mContext, "isChecked="+isChecked, Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(FavoriteListActivity.this, ChangeWallpaperService.class);
-                if(isChecked){
-                    //启动切换壁纸
-                    intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
-                    startService(intent);
-                }else{
-                    intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
-                    startService(intent);
-                }
-
-                SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putBoolean("enableScheduleChangeWallpaper", isChecked);
-                editor.apply();
-            }
-        });
-        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-        boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
-        if(enableChangeWallpaper){
-            play_wallpaper.setChecked(true);
-        }else{
-            play_wallpaper.setChecked(false);
-        }
 
         ib_upload = (ImageButton)findViewById(R.id.ib_upload);
         ib_close = (ImageButton)findViewById(R.id.ib_close);
@@ -148,7 +96,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         ib_close.setOnClickListener(this);
         ib_upload.setOnClickListener(this);
 
-        mGridAdapter = new FavoriteWallpaperGridAdapter(mContext, mWallpaperRecyclerView);
+        mGridAdapter = new UploadWallpaperGridAdapter(mContext, mWallpaperRecyclerView);
         mGridLayoutManager = new GridLayoutManager(mContext, 2);
         mWallpaperRecyclerView.setAdapter(mGridAdapter);
         mWallpaperRecyclerView.setLayoutManager(mGridLayoutManager);
@@ -160,11 +108,11 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
             @Override
             public void onSwipe(boolean fromLtoR) {
                 if(fromLtoR) {
-                    FavoriteListActivity.this.finish();
+                    UploadListActivity.this.finish();
                 }
             }
         });
-        mWallpaperRecyclerView.addItemDecoration(new FavoriteListActivity.SpaceItemDecoration(0));
+        mWallpaperRecyclerView.addItemDecoration(new UploadListActivity.SpaceItemDecoration(0));
 
         fl_wallpaper_preview = (FrameLayout)findViewById(R.id.fl_wallpaper_preview);
         mViewPager = (PhotoViewPager)findViewById(R.id.view_paper);
@@ -193,6 +141,12 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         });
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        loadWallpaperItems();
+    }
+
     AsyncTask<String, Void, String> mLoadTask;
     public void loadWallpaperItems() {
         Log.i(TAG, "loadWallpaperItems");
@@ -210,15 +164,15 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
 
             @Override
             protected String doInBackground(String... params) {
-                File myfavoritelist_dir = new File(EXTERNAL_MY_FAVORITE_WALLPAPER_DIR);
-                File[] files = myfavoritelist_dir.listFiles(new FilenameFilter() {
+                File myuploadlist_dir = new File(EXTERNAL_UPLOAD_WALLPAPER_DIR);
+                File[] files = myuploadlist_dir.listFiles(new FilenameFilter() {
                     @Override
                     public boolean accept(File dir, String name) {
                         String lowerName = name.toLowerCase();
-                        if(lowerName.endsWith(".png") || lowerName.endsWith(".jpg")|| lowerName.endsWith(".jpeg") || lowerName.endsWith(".webp")){
-                            return true;
-                        }
-                        return false;
+//                        if(lowerName.endsWith(".png") || lowerName.endsWith(".jpg")|| lowerName.endsWith(".jpeg") || lowerName.endsWith(".webp")){
+//                            return true;
+//                        }
+                        return true;
                     }
                 });
                 if(files != null && files.length>0) {
@@ -420,7 +374,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
                     public void run() {
                         hideHint();
                     }
-                },5000);
+                },2000);
             }
             @Override
             public void onAnimationRepeat(Animation animation) {

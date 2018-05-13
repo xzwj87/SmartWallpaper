@@ -41,6 +41,7 @@ import android.widget.Toast;
 
 import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_FILE_PATH_URL;
+import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_VOTEUP_COUNT_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.UPLOAD_WALLPAPER_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.VOTEUP_WALLPAPER_URL;
 
@@ -158,8 +159,8 @@ public class ApiClient {
 			realUrl = new URL(url);
 			conn = (HttpURLConnection)realUrl.openConnection();
 			conn.setRequestMethod("POST");
-			conn.setConnectTimeout(3000);
-			conn.setReadTimeout(30000);
+			conn.setConnectTimeout(2000);
+			conn.setReadTimeout(3000);
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 			conn.setUseCaches(false);
@@ -235,6 +236,10 @@ public class ApiClient {
 				paramMap.put("utteranceRaw",utteranceRaw);
 
 				JSONObject jsonObject = ApiClient.request_post(UrlConstant.HOST_URL_TS, paramMap);
+				if(jsonObject == null){
+					return null;
+				}
+
 				HashMap<String, String> parameters = new HashMap<>();
 				ArrayList<String> hashcodeList = new ArrayList<>();
 				ArrayList<Integer> voteUpCntList = new ArrayList<>();
@@ -300,6 +305,7 @@ public class ApiClient {
 					handled = CommandExecutor.getInstance(AppContext.appContext).execute(cmd);
 				}else{
 					Toast.makeText(AppContext.appContext, "服务器异常!!!", Toast.LENGTH_SHORT).show();
+					Log.e(TAG, "server exception");
 					handled =false;
 				}
 				if(ASRDialog.getASRDialogInstance() != null){
@@ -329,7 +335,7 @@ public class ApiClient {
 		return false;
 	}
 
-	//根据URL获取图片
+	//根据URL获取壁纸
 	public static Bitmap getBitmapByUrl(String imageUrl){
 		Log.d(TAG, "getBitmapByUrl-imageUrl="+imageUrl);
 		try{
@@ -348,7 +354,7 @@ public class ApiClient {
 		}
 		return null;
 	}
-	//根据hashcode获取图片
+	//根据hashcode获取壁纸
 	public static Bitmap getBitmapByHashCode(String hashcode){
 		Log.d(TAG, "getBitmapByHashCode-hashcode="+hashcode);
 		String api_url = UrlConstant.DOWNLOAD_WALLPAPER_URL + hashcode;
@@ -368,7 +374,7 @@ public class ApiClient {
 		}
 		return null;
 	}
-	//根据hashcode获取图片的路径
+	//根据hashcode获取壁纸的路径
 	public static String getWallpaperFilePathByHashCode(String hashcode){
 		Log.d(TAG, "getWallpaperFIlePathByHashCode-hashcode="+hashcode);
 		String api_url = GET_WALLPAPER_FILE_PATH_URL + hashcode;
@@ -390,7 +396,26 @@ public class ApiClient {
 		Log.e(TAG, "getWallpaperFIlePathByHashCode-errmsg="+errmsg);
 		return null;
 	}
-
+	//根据hashcode获取壁纸的点赞数量
+	public static int getVoteUpCount(String hashcode){
+		String api_url = GET_WALLPAPER_VOTEUP_COUNT_URL + hashcode;
+		int errno;
+		String errmsg = null;
+		try{
+			JSONObject jsonObj = ApiClient.request_get(api_url);
+			errno = jsonObj.getInt("errno");
+			errmsg = jsonObj.getString("errmsg");
+			if(errno == 0) {
+				int voteUpCount = jsonObj.getInt("voteup_count");
+				return voteUpCount;
+			}
+		}catch (Exception e) {
+			Log.e(TAG, "getVoteUpCount-error="+e.toString());
+			e.printStackTrace();
+		}
+		Log.e(TAG, "getVoteUpCount-errmsg="+errmsg);
+		return 0;
+	}
 
 	private static final int TIME_OUT = 10*10000000; //超时时间
 	private static final String CHARSET = "utf-8"; //设置编码
