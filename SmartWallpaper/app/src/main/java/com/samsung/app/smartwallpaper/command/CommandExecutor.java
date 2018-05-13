@@ -19,10 +19,13 @@ import com.samsung.app.smartwallpaper.FavoriteListActivity;
 import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
+import com.samsung.app.smartwallpaper.utils.FileUtil;
 import com.samsung.app.smartwallpaper.wallpaper.CameraLiveWallpaper;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 import com.samsung.app.smartwallpaper.wallpaper.VideoLiveWallpaper;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -344,40 +347,42 @@ public class CommandExecutor {
         executeTask(new Runnable() {
             @Override
             public void run() {
-                Bitmap wallpaper = wallpaper = BitmapFactory.decodeFile(picturePath);
-                if(wallpaper != null) {
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-                    Date date = new Date(System.currentTimeMillis());
-
-                    int idx = picturePath.lastIndexOf(".");
-                    String ext = picturePath.substring(idx);
-                    if (TextUtils.isEmpty(ext)) {
-                        ext = WALLPAPER_FILE_EXT;
-                    }
-
-                    idx = picturePath.lastIndexOf("/");
-                    String src_filename = picturePath.substring(idx+1);
-                    Log.i(TAG, "src_filename="+src_filename);
-
-                    File dir = new File(EXTERNAL_UPLOAD_WALLPAPER_DIR);
-                    if(!dir.exists()){
-                        dir.mkdirs();
-                    }
-                    String dstFilePath = EXTERNAL_UPLOAD_WALLPAPER_DIR + File.separator + src_filename;//EXTERNAL_UPLOAD_WALLPAPER_DIR + File.separator + simpleDateFormat.format(date) + ext;
-                    File file = new File(dstFilePath);
-                    if(!file.exists()){
-                        Log.i(TAG, "saveBitmap");
-                        SmartWallpaperHelper.saveBitmap(wallpaper, dstFilePath);
-                    }
-                    Log.i(TAG, "dstFilePath="+dstFilePath);
-                    if(ApiClient.uploadWallpaper(dstFilePath)){
-                        showToast("上传壁纸成功");
+                File file = new File(picturePath);
+                if(file.exists()){
+                    String response = ApiClient.uploadWallpaper(picturePath);
+                    Log.d(TAG, "response="+response.toString());
+                    if(TextUtils.isEmpty(response)){
+                        showToast("上传壁纸失败");
                     }else{
+                        try {
+                            JSONObject jsonResult = new JSONObject(response);
+                            int errno = jsonResult.getInt("errno");
+                            if (errno == 0) {
+                                String hashcode = jsonResult.getString("hashcode");
+                                if(!TextUtils.isEmpty(hashcode)) {
+//                                    int idx = picturePath.lastIndexOf(".");
+//                                    String ext = picturePath.substring(idx);
+//                                    if (TextUtils.isEmpty(ext)) {
+//                                        ext = WALLPAPER_FILE_EXT;
+//                                    }
+                                    file = new File(EXTERNAL_UPLOAD_WALLPAPER_DIR);
+                                    if(!file.exists()){
+                                        file.mkdirs();
+                                    }
+                                    String dstFilePath = EXTERNAL_UPLOAD_WALLPAPER_DIR + File.separator + hashcode;//+ ext;
+                                    file = new File(dstFilePath);
+                                    if(!file.exists()){
+                                        SmartWallpaperHelper.copyFile(picturePath, dstFilePath);
+                                    }
+                                }
+                                showToast("上传壁纸成功");
+                                return;
+                            }
+                        }catch (Exception e){
+                            Log.e(TAG, "error="+e.toString());
+                        }
                         showToast("上传壁纸失败");
                     }
-
-                }else{
-                    showToast("上传壁纸失败");
                 }
             }
         });

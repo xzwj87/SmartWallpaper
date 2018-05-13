@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.UUID;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -298,7 +299,7 @@ public class ApiClient {
 					Toast.makeText(AppContext.appContext, "Command:"+ cmd.toString(), Toast.LENGTH_SHORT).show();
 					handled = CommandExecutor.getInstance(AppContext.appContext).execute(cmd);
 				}else{
-					Toast.makeText(AppContext.appContext, "Command is null", Toast.LENGTH_SHORT).show();
+					Toast.makeText(AppContext.appContext, "服务器异常!!!", Toast.LENGTH_SHORT).show();
 					handled =false;
 				}
 				if(ASRDialog.getASRDialogInstance() != null){
@@ -393,15 +394,15 @@ public class ApiClient {
 
 	private static final int TIME_OUT = 10*10000000; //超时时间
 	private static final String CHARSET = "utf-8"; //设置编码
-	private static final String BOUNDARY = "FlPm4LpSXsE" ; //UUID.randomUUID().toString(); //边界标识 随机生成 String PREFIX = "--" , LINE_END = "\r\n";
+	private static String BOUNDARY = "FlPm4LpSXsE" ; //UUID.randomUUID().toString(); //边界标识 随机生成 String PREFIX = "--" , LINE_END = "\r\n";
 	private static final String PREFIX="--";
-	private static final String LINE_END="\n\r";
+	private static final String LINE_END="\r\n";
 	private static final String CONTENT_TYPE = "multipart/form-data"; //内容类型
-	public static boolean uploadWallpaper(String dstFilePath) {
+	public static String uploadWallpaper(String dstFilePath) {
 		Log.d(TAG, "uploadWallpaper-dstFilePath="+dstFilePath);
 		File file = new File(dstFilePath);
 		if(!file.exists() || !file.isFile()){
-			return false;
+			return null;
 		}
 		try {
 			URL url = new URL(UPLOAD_WALLPAPER_URL);
@@ -413,83 +414,58 @@ public class ApiClient {
 			conn.setUseCaches(false); //不允许使用缓存
 			conn.setRequestMethod("POST"); //请求方式
 			conn.setRequestProperty("Charset", CHARSET);//设置编码
-			//头信息
 			conn.setRequestProperty("Connection", "keep-alive");
+			BOUNDARY = UUID.randomUUID().toString();
 			conn.setRequestProperty("Content-Type", CONTENT_TYPE + ";boundary=" + BOUNDARY);
 
-			if(file!=null) {
-				/** * 当文件不为空，把文件包装并且上传 */
-				OutputStream outputSteam=conn.getOutputStream();
-				DataOutputStream dos = new DataOutputStream(outputSteam);
+			/** * 当文件不为空，把文件包装并且上传 */
+			OutputStream outputSteam=conn.getOutputStream();
+			DataOutputStream dos = new DataOutputStream(outputSteam);
 
-//				String[] params = {"\"ownerId\"","\"docName\"","\"docType\"","\"sessionKey\"","\"sig\""};
-//				String[] values = {"1410065922",file.getName(),"jpg","dfbe0e1686656d5a0c8de11347f93bb6","e70cff74f433ded54b014e7402cf094a"};
-//				//添加docName,docType,sessionKey,sig参数
-//				for(int i=0;i<params.length;i++){
-//					//添加分割边界
-//					StringBuffer sb = new StringBuffer();
-//					sb.append(PREFIX);
-//					sb.append(BOUNDARY);
-//					sb.append(LINE_END);
-//
-//					sb.append("Content-Disposition: form-data; name=" + params[i] + LINE_END);
-//					sb.append(LINE_END);
-//					sb.append(values[i]);
-//					sb.append(LINE_END);
-//					dos.write(sb.toString().getBytes());
-//				}
+			StringBuffer sb = new StringBuffer();
+			sb.append(PREFIX);
+			sb.append(BOUNDARY);
+			sb.append(LINE_END);
 
-				//file内容
-				StringBuffer sb = new StringBuffer();
-				sb.append(LINE_END);
-				sb.append(PREFIX);
-				sb.append(BOUNDARY);
-				sb.append(LINE_END);
+			sb.append("Content-Disposition: form-data; name=\"myfile\";filename=\"" + file.getName() + "\"" + LINE_END);
+			sb.append("Content-Type: application/octet-stream; charset="
+					+ CHARSET + LINE_END);
+			sb.append(LINE_END);
 
-				sb.append("Content-Disposition: form-data; name=\"data\";filename=" + "\"" + file.getName() + "\"" + LINE_END);
-				sb.append("Content-Type: image/jpg"+LINE_END);
-				sb.append(LINE_END);
-				dos.write(sb.toString().getBytes());
-				//读取文件的内容
-				InputStream is = new FileInputStream(file);
-				byte[] bytes = new byte[1024];
-				int len = 0;
-				while((len=is.read(bytes))!=-1){
-					dos.write(bytes, 0, len);
+			dos.write(sb.toString().getBytes());
+			//读取文件的内容
+			InputStream is = new FileInputStream(file);
+			byte[] bytes = new byte[1024];
+			int len = 0;
+			while((len=is.read(bytes))!=-1){
+				dos.write(bytes, 0, len);
+			}
+			is.close();
+			//写入文件二进制内容
+			dos.write(LINE_END.getBytes());
+			//写入end data
+			byte[] end_data = (PREFIX+BOUNDARY+PREFIX+LINE_END).getBytes();
+			dos.write(end_data);
+			dos.flush();
+
+			int res = conn.getResponseCode();
+			Log.d(TAG, "Response Code="+res);
+			if(res==200) {
+				String oneLine;
+				StringBuffer response = new StringBuffer();
+				BufferedReader input = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				while ((oneLine = input.readLine()) != null) {
+					response.append(oneLine);
 				}
-				is.close();
-				//写入文件二进制内容
-				dos.write(LINE_END.getBytes());
-				//写入end data
-				byte[] end_data = (PREFIX+BOUNDARY+PREFIX+LINE_END).getBytes();
-				dos.write(end_data);
-				dos.flush();
-				/**
-				 * 获取响应码 200=成功
-				 * 当响应成功，获取响应的流
-				 */
-				int res = conn.getResponseCode();
-				Log.e(TAG, "response code:"+res);
-				if(res==200) {
-					String oneLine;
-					StringBuffer response = new StringBuffer();
-					BufferedReader input = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-					while ((oneLine = input.readLine()) != null) {
-						response.append(oneLine);
-					}
-					Log.d(TAG, "response="+response.toString());
-					return true;
-				}else{
-					return false;
-				}
+				return response.toString();
 			}else{
-				return false;
+				return null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			Log.e(TAG, "error="+e.toString());
 		}
+		return null;
 	}
-
 }
 

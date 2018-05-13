@@ -13,8 +13,9 @@ import java.nio.file.Path;
 
 public class UrlConstant {
     
-    public final static String HOST ="193.112.122.156";
-    public final static String PORT_VERSION ="8886";//
+    public final static String HOST = "193.112.122.156";//线上服务器
+//    public final static String HOST = "192.168.0.101";//本地调试用
+    public final static String PORT_VERSION = "8886";//
     public final static String PORT_TS ="8887";//
     public final static String PORT_WRS ="8888";//
 

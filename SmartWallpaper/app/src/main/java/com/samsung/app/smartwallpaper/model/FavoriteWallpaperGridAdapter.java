@@ -91,8 +91,9 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
             public boolean onPreDraw() {
                 FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)holder.iv_wallpaper.getLayoutParams();
                 int height = (int)(holder.iv_wallpaper.getMeasuredWidth() * ratio);
-                if(height <= 0){
-                    height = (int)(mContext.getResources().getDisplayMetrics().density * 300);//300dp
+                if(height <= holder.iv_wallpaper.getMeasuredWidth()){
+//                    height = (int)(mContext.getResources().getDisplayMetrics().density * 300);//300dp
+                    height = (int)(holder.iv_wallpaper.getMeasuredWidth() / ratio);
                 }
                 layoutParams.height = height;
                 return true;
