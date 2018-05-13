@@ -126,7 +126,7 @@ public class WallpaperItem {
             @Override
             protected Boolean doInBackground(String... params) {
                 String hashcode = params[0];
-                Bitmap bitmap = ApiClient.getBitmapByHashCode(hashcode);
+                Bitmap bitmap = ApiClient.getWallpaperByHashCode(hashcode);
                 if(bitmap != null){
                     mWallpaperDrawable = new BitmapDrawable(bitmap);
                     return true;

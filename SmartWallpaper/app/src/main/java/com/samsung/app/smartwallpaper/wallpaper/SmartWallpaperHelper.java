@@ -104,13 +104,12 @@ public class SmartWallpaperHelper {
         return setHomeScreenWallpaper(bitmap);
     }
     //设置锁屏壁纸
-    private void setLockScreenWallPaper(Bitmap wallpaper) {
+    public synchronized void setLockScreenWallpaper(Bitmap wallpaper) {
         Log.d(TAG, "setLockScreenWallPaper-");
         try {
-            WallpaperManager mWallManager = WallpaperManager.getInstance(mContext);
-            Class class1 = mWallManager.getClass();//获取类名
+            Class class1 = wManager.getClass();//获取类名
             Method setWallPaperMethod = class1.getMethod("setBitmapToLockWallpaper", Bitmap.class);
-            setWallPaperMethod.invoke(mWallManager, wallpaper);
+            setWallPaperMethod.invoke(wManager, wallpaper);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -343,24 +342,24 @@ public class SmartWallpaperHelper {
     }
 
     //模糊化壁纸
-    private void blurWallpaper() {
+    public void blurWallpaper() {
         Bitmap wallpaper = getCurrentWallpaper();
         if(wallpaper == null){
             return;
         }
 
-        float scaleFactor = 8;
+        float scaleFactor = 1;
         float radius = 2;
 
-        int width = wManager.getDesiredMinimumWidth();
-        int height = wManager.getDesiredMinimumHeight();
+        int width = wallpaper.getWidth();//wManager.getDesiredMinimumWidth();
+        int height = wallpaper.getHeight();//wManager.getDesiredMinimumHeight();
 
         Bitmap new_wallpaper = Bitmap.createBitmap(
                 (int) (width / scaleFactor),
                 (int) (height / scaleFactor),
                 Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(new_wallpaper);
-        canvas.scale(1 / scaleFactor, 1 / scaleFactor);
+//        canvas.scale(1 / scaleFactor, 1 / scaleFactor);
         Paint paint = new Paint();
         paint.setFlags(Paint.FILTER_BITMAP_FLAG);
         canvas.drawBitmap(wallpaper, 0, 0, paint);

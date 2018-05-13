@@ -336,7 +336,7 @@ public class ApiClient {
 	}
 
 	//根据URL获取壁纸
-	public static Bitmap getBitmapByUrl(String imageUrl){
+	public static Bitmap getWallpaperByUrl(String imageUrl){
 		Log.d(TAG, "getBitmapByUrl-imageUrl="+imageUrl);
 		try{
 			URL url = new URL(imageUrl);
@@ -355,7 +355,7 @@ public class ApiClient {
 		return null;
 	}
 	//根据hashcode获取壁纸
-	public static Bitmap getBitmapByHashCode(String hashcode){
+	public static Bitmap getWallpaperByHashCode(String hashcode){
 		Log.d(TAG, "getBitmapByHashCode-hashcode="+hashcode);
 		String api_url = UrlConstant.DOWNLOAD_WALLPAPER_URL + hashcode;
 		try{
