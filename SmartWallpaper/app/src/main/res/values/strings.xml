@@ -7,6 +7,7 @@
     <string name="search_result">搜索结果</string>
     <string name="tag_search_result">搜索结果(%s)</string>
     <string name="recommend_result">为您推荐</string>
+    <string name="key_words">关键字搜索</string>
 
     <string name="my_favorite_list">壁纸收藏夹</string>
     <string name="play_wallpaper">定时切换</string>

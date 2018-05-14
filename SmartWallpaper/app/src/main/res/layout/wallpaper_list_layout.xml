@@ -6,10 +6,13 @@
         android:orientation="vertical"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:background="#fafafa">
+        android:background="#eaeaea">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="#fafafa"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:padding="10dp"
             android:gravity="center_vertical">
             <TextView
@@ -22,6 +25,25 @@
                 android:text="@string/search_result"
                 android:textStyle="bold"
                 android:textSize="20sp"/>
+            <com.samsung.app.smartwallpaper.view.SearchBox
+                android:id="@+id/searchbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@id/ib_myfavoritelist"
+                android:layout_toEndOf="@+id/tv_title"
+                android:drawableEnd="@drawable/search"
+                android:background="@android:drawable/editbox_background_normal"
+                android:windowSoftInputMode="adjustNothing|stateHidden"
+                android:textColor="#000"
+                android:textColorHint="#bfbfbf"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:paddingStart="10dip"
+                android:inputType="text"
+                android:maxLines="1"
+                android:imeOptions="actionDone"
+                android:textColorHighlight="@android:color/holo_blue_bright"
+                android:hint="@string/key_words"/>
             <ImageButton
                 android:id="@+id/ib_myfavoritelist"
                 android:layout_width="28dp"
@@ -55,7 +77,7 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:textColor="@android:color/black"
-                android:text="找不到壁纸"
+                android:text="服务器异常\n连接超时!"
                 android:textSize="16sp"/>
             <com.samsung.app.smartwallpaper.view.WallpaperRecyclerView
                 android:id="@+id/wallpaper_recycleview"

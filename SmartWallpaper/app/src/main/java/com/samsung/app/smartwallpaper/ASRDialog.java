@@ -534,7 +534,11 @@ public class ASRDialog  extends Activity {
                     startRecognition();
                     break;
                 case R.id.main_btn:
-                    ApiClient.requestTS("任意换一张壁纸");
+                    //ApiClient.requestTS("任意换一张壁纸");
+                    Intent intent = new Intent(mContext, WallpaperListActivity.class);
+//                    intent.putExtra("command", cmd);
+                    mContext.startActivity(intent);
+
                     if(ASRDialog.getASRDialogInstance() != null){
                         ASRDialog.getASRDialogInstance().finish();
                     }
