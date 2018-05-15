@@ -290,7 +290,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
             case R.id.tv_apply:
                 pos = mViewPager.getCurrentItem();
                 wallpaperItem = mWallpaperItems.get(pos);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
             case R.id.ib_share:
                 pos = mViewPager.getCurrentItem();
@@ -314,7 +314,22 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
 
-            CommandExecutor.getInstance(mContext).uploadWallpaperTask(picturePath);
+            CommandExecutor.getInstance(mContext).uploadWallpaperTask(picturePath, new CommandExecutor.CallBack() {
+                @Override
+                public void onUploadFinish(final boolean success) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(success) {
+                                showHint("上传成功");
+                                loadWallpaperItems();
+                            }else{
+                                showHint("上传失败");
+                            }
+                        }
+                    });
+                }
+            });
             showHint("正在上传...");
         }
     }
@@ -358,7 +373,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                 Animation.RELATIVE_TO_SELF, 0.0f,
                 Animation.RELATIVE_TO_SELF, -tv_hint.getHeight(),
                 Animation.RELATIVE_TO_SELF,0.0f);
-        showTranslateAnimation.setDuration(2000);
+        showTranslateAnimation.setDuration(1000);
         showTranslateAnimation.setFillAfter(false);
         showTranslateAnimation.setAnimationListener(new Animation.AnimationListener(){
             @Override
@@ -369,6 +384,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
             @Override
             public void onAnimationEnd(Animation animation) {
                 tv_hint.setVisibility(VISIBLE);
+                tv_hint.setTranslationY(0);
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -388,7 +404,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                 Animation.RELATIVE_TO_SELF, 0.0f,
                 Animation.RELATIVE_TO_SELF, 0.0f,
                 Animation.RELATIVE_TO_SELF, -tv_hint.getHeight());
-        hideTranslateAnimation.setDuration(3000);
+        hideTranslateAnimation.setDuration(2000);
         hideTranslateAnimation.setFillAfter(false);
         hideTranslateAnimation.setAnimationListener(new Animation.AnimationListener(){
             @Override

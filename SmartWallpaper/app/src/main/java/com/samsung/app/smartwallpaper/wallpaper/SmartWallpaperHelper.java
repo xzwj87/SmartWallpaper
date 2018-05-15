@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v4.content.FileProvider;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.samsung.app.smartwallpaper.utils.FastBlur;
@@ -43,10 +44,10 @@ public class SmartWallpaperHelper {
 
     private Context mContext;
     private WallpaperManager wManager = null;
-    private AlarmManager mAlarmManager = null;
     private PendingIntent pi = null;
-    public static Bitmap curWallpaper = null;
-    public static Bitmap previousWallpaper = null;
+    private Bitmap curWallpaper = null;
+    private Bitmap previousWallpaper = null;
+    private static String curHashCode = null;
 
     private static SmartWallpaperHelper mSmartWallpaperManager = null;
     public static SmartWallpaperHelper getInstance(Context context){
@@ -63,11 +64,13 @@ public class SmartWallpaperHelper {
         pi = PendingIntent.getService(mContext, 0, intent, 0);
 
     }
-    //    private void startLiveWallpaper(){
-//        final Intent pickWallpaper = new Intent(Intent.ACTION_SET_WALLPAPER);
-//        Intent chooser = Intent.createChooser(pickWallpaper,"设置动态壁纸");
-//        startActivity(chooser);
-//    }
+
+    public static void setCurHashCode(String hashCode){
+        curHashCode = hashCode;
+    }
+    public static String getCurHashCode(){
+        return curHashCode;
+    }
 
     public synchronized void setLiveWallpaper(Class<?> cls) {
         Log.d(TAG, "setLiveWallpaper");
@@ -124,20 +127,6 @@ public class SmartWallpaperHelper {
         Drawable wallpaperDrawable = wManager.getDrawable();
         return wallpaperDrawable;
     }
-
-    //自动更换壁纸
-    public void startAutoChangeWallpaper(){
-        mAlarmManager = (AlarmManager)mContext.getSystemService(Service.ALARM_SERVICE);
-        mAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 0, 5000, pi);
-    }
-    public void stopAutoChangeWallpaper(){
-        if(mAlarmManager != null){
-            mAlarmManager.cancel(pi);
-        }
-        mAlarmManager = null;
-        pi = null;
-    }
-
 
     public static final String EXTERNAL_TEMP_DIR = Environment.getExternalStorageDirectory() + "/.smartwallpaper";
     public static final String TEMP_WALLPAPER = EXTERNAL_TEMP_DIR + "/temp.png";
@@ -286,7 +275,11 @@ public class SmartWallpaperHelper {
         }
     }
     //收藏当前壁纸
-    public boolean favoriteCurrentWallpaper(String hashcode){
+    public boolean favoriteCurrentWallpaper(){
+        String hashcode = getCurHashCode();
+        if(TextUtils.isEmpty(hashcode)){
+            hashcode = "01cd8cce69b5315d787baeda98cb6911";
+        }
         Bitmap wallpaper = getCurrentWallpaper();
         if(wallpaper == null) {
             return false;

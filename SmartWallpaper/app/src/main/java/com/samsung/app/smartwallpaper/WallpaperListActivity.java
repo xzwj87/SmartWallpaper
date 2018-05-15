@@ -409,7 +409,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             case R.id.tv_apply:
                 pos = mViewPager.getCurrentItem();
                 wallpaperItem = mWallpaperItems.get(pos);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
             case R.id.ib_share:
                 pos = mViewPager.getCurrentItem();

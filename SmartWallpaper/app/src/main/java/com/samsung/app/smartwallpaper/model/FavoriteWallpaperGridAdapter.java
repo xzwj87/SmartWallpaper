@@ -177,7 +177,7 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
                 break;
             case R.id.tv_apply:
                 startScaleAnimation(v);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
         }
     }
