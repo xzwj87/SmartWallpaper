@@ -391,7 +391,7 @@ public class CommandExecutor {
                 File file = new File(picturePath);
                 if(file.exists()){
                     String response = ApiClient.uploadWallpaper(picturePath);
-                    Log.d(TAG, "response="+response.toString());
+                    Log.d(TAG, "response="+response);
                     if(TextUtils.isEmpty(response)){
                         showToast("上传壁纸失败");
                     }else{

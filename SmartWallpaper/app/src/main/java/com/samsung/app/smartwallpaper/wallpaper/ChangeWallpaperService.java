@@ -250,7 +250,7 @@ public class ChangeWallpaperService extends Service {
                 if(files!=null && files.length > 0) {
                     for (File child : files) {
                         WallpaperItem item = new WallpaperItem();
-                        item.setWallpaperPath(child.getAbsolutePath());
+                        item.setWallpaperLocalPath(child.getAbsolutePath());
                         Bitmap bitmap = null;
                         try {
                             bitmap = BitmapFactory.decodeFile(child.getAbsolutePath());
@@ -455,7 +455,7 @@ public class ChangeWallpaperService extends Service {
             mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         }
         boolean ignore = !mPowerManager.isScreenOn();
-        ignore |= mKeyguardManager.inKeyguardRestrictedInputMode();
+        //ignore |= mKeyguardManager.inKeyguardRestrictedInputMode();
         return ignore;
     }
 }

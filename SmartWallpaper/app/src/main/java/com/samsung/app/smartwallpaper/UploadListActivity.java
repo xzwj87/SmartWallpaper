@@ -178,7 +178,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                 if(files != null && files.length>0) {
                     for (File child : files) {
                         WallpaperItem item = new WallpaperItem();
-                        item.setWallpaperPath(child.getAbsolutePath());
+                        item.setWallpaperLocalPath(child.getAbsolutePath());
                         mWallpaperItems.add(item);
                         Log.i(TAG, "mWallpaperItems.add-child.getAbsolutePath()=" + child.getAbsolutePath());
                     }

@@ -224,7 +224,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
                 if(files != null && files.length>0) {
                     for (File child : files) {
                         WallpaperItem item = new WallpaperItem();
-                        item.setWallpaperPath(child.getAbsolutePath());
+                        item.setWallpaperLocalPath(child.getAbsolutePath());
                         mWallpaperItems.add(item);
                         Log.i(TAG, "mWallpaperItems.add-child.getAbsolutePath()=" + child.getAbsolutePath());
                     }
@@ -311,10 +311,10 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
     public void showEmptyView(boolean bShowEmptyView){
         Log.i(TAG, "showEmptyView="+bShowEmptyView);
         if(bShowEmptyView) {
-            mWallpaperRecyclerView.setVisibility(GONE);
+//            mWallpaperRecyclerView.setVisibility(GONE);
             tv_empty.setVisibility(VISIBLE);
         }else{
-            mWallpaperRecyclerView.setVisibility(VISIBLE);
+//            mWallpaperRecyclerView.setVisibility(VISIBLE);
             tv_empty.setVisibility(GONE);
         }
     }
