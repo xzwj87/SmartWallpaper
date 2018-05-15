@@ -50,13 +50,15 @@ public class WallpaperRecyclerView extends RecyclerView{
                 diffX = latestX - touchDownX;
                 diffY = latestY - touchDownY;
                 diffTime = event.getEventTime() - downTime;
-                if(diffX > 400 && diffTime < 600 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(-1)){
+                if(diffX > 200 && diffTime < 800 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(-1)){
                     if(mCb != null) {
                         mCb.onSwipe(true);
+                        return true;
                     }
-                }else if(diffX < -400 && diffTime < 600 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(1)){
+                }else if(diffX < -200 && diffTime < 800 && Math.abs(diffY)<Math.abs(diffX) && !canScrollHorizontally(1)){
                     if(mCb != null) {
                         mCb.onSwipe(false);
+                        return true;
                     }
                 }
                 break;

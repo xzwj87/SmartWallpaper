@@ -26,8 +26,10 @@ import android.util.Log;
 import com.samsung.app.smartwallpaper.utils.FastBlur;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -102,13 +104,12 @@ public class SmartWallpaperHelper {
         return setHomeScreenWallpaper(bitmap);
     }
     //设置锁屏壁纸
-    private void setLockScreenWallPaper(Bitmap wallpaper) {
+    public synchronized void setLockScreenWallpaper(Bitmap wallpaper) {
         Log.d(TAG, "setLockScreenWallPaper-");
         try {
-            WallpaperManager mWallManager = WallpaperManager.getInstance(mContext);
-            Class class1 = mWallManager.getClass();//获取类名
+            Class class1 = wManager.getClass();//获取类名
             Method setWallPaperMethod = class1.getMethod("setBitmapToLockWallpaper", Bitmap.class);
-            setWallPaperMethod.invoke(mWallManager, wallpaper);
+            setWallPaperMethod.invoke(wManager, wallpaper);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -138,8 +139,8 @@ public class SmartWallpaperHelper {
     }
 
 
-    public static final String TEMP_DIR = Environment.getExternalStorageDirectory() + "/smartwallpaper/";
-    public static final String TEMP_WALLPAPER = TEMP_DIR + "temp.png";
+    public static final String EXTERNAL_TEMP_DIR = Environment.getExternalStorageDirectory() + "/.smartwallpaper";
+    public static final String TEMP_WALLPAPER = EXTERNAL_TEMP_DIR + "/temp.png";
     public boolean saveWallpaper(Drawable wallpaperDrawable){
         Log.i(TAG, "saveCurWallpaper");
         Bitmap wallpaper = ((BitmapDrawable) wallpaperDrawable).getBitmap();
@@ -147,7 +148,7 @@ public class SmartWallpaperHelper {
             return false;
         }
         try {
-            File file = new File(TEMP_DIR);
+            File file = new File(EXTERNAL_TEMP_DIR);
             if(!file.exists()){
                 file.mkdirs();
             }
@@ -194,8 +195,10 @@ public class SmartWallpaperHelper {
 
 
     public static final String EXTERNAL_MY_FAVORITE_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/壁纸收藏夹";
+    public static final String EXTERNAL_UPLOAD_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/.smartwallpaper/uploads";
     public static final String WALLPAPER_FILE_EXT = ".jpg";
     public static void saveBitmap(Bitmap bitmap, String dstFileName){
+        Log.i(TAG, "save bitmap to "+dstFileName);
         try {
             FileOutputStream fos = new FileOutputStream(dstFileName);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
@@ -204,9 +207,74 @@ public class SmartWallpaperHelper {
         } catch (Exception e) {
         }
     }
+    public static void copyFile(String oldPath, String newPath) {
+        Log.i(TAG, "copy file from "+oldPath+" to "+newPath);
+        try {
+            int bytesum = 0;
+            int byteread = 0;
+            File oldfile = new File(oldPath);
+            if (oldfile.exists()) { //文件存在时
+                InputStream inStream = new FileInputStream(oldPath); //读入原文件
+                FileOutputStream fs = new FileOutputStream(newPath);
+                byte[] buffer = new byte[1444];
+                int length;
+                while((byteread = inStream.read(buffer)) != -1) {
+                    bytesum += byteread; //字节数 文件大小
+                    System.out.println(bytesum);
+                    fs.write(buffer, 0, byteread);
+                }
+                inStream.close();
+            }
+        }catch (Exception e) {
+            System.out.println("复制单个文件操作出错");
+            e.printStackTrace();
+        }
+    }
+    public static void copyFolder(String oldPath, String newPath) {
+        Log.i(TAG, "copy folder from "+oldPath+" to "+newPath);
+        try {
+            (new File(newPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹
+            File a=new File(oldPath);
+            String[] file=a.list();
+            File temp=null;
+            for (int i = 0; i < file.length; i++) {
+                if(oldPath.endsWith(File.separator)){
+                    temp=new File(oldPath+file[i]);
+                }
+                else{
+                    temp=new File(oldPath+File.separator+file[i]);
+                }
+
+                if(temp.isFile()){
+                    FileInputStream input = new FileInputStream(temp);
+                    FileOutputStream output = new FileOutputStream(newPath + "/" +
+                            (temp.getName()).toString());
+                    byte[] b = new byte[1024 * 5];
+                    int len;
+                    while ( (len = input.read(b)) != -1) {
+                        output.write(b, 0, len);
+                    }
+                    output.flush();
+                    output.close();
+                    input.close();
+                }
+                if(temp.isDirectory()){//如果是子文件夹
+                    copyFolder(oldPath+"/"+file[i],newPath+"/"+file[i]);
+                }
+            }
+        }catch (Exception e) {
+            System.out.println("复制整个文件夹内容操作出错");
+            e.printStackTrace();
+        }
+    }
+
     //收藏指定Drawable的壁纸
     public static void favoriteWallpaper(Drawable drawable, String hashcode){
         try {
+            File dir = new File(EXTERNAL_MY_FAVORITE_WALLPAPER_DIR);
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
             String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
             BitmapDrawable bitmapDrawable = (BitmapDrawable)drawable;
             Bitmap bitmap = bitmapDrawable.getBitmap();
@@ -274,24 +342,24 @@ public class SmartWallpaperHelper {
     }
 
     //模糊化壁纸
-    private void blurWallpaper() {
+    public void blurWallpaper() {
         Bitmap wallpaper = getCurrentWallpaper();
         if(wallpaper == null){
             return;
         }
 
-        float scaleFactor = 8;
+        float scaleFactor = 1;
         float radius = 2;
 
-        int width = wManager.getDesiredMinimumWidth();
-        int height = wManager.getDesiredMinimumHeight();
+        int width = wallpaper.getWidth();//wManager.getDesiredMinimumWidth();
+        int height = wallpaper.getHeight();//wManager.getDesiredMinimumHeight();
 
         Bitmap new_wallpaper = Bitmap.createBitmap(
                 (int) (width / scaleFactor),
                 (int) (height / scaleFactor),
                 Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(new_wallpaper);
-        canvas.scale(1 / scaleFactor, 1 / scaleFactor);
+//        canvas.scale(1 / scaleFactor, 1 / scaleFactor);
         Paint paint = new Paint();
         paint.setFlags(Paint.FILTER_BITMAP_FLAG);
         canvas.drawBitmap(wallpaper, 0, 0, paint);

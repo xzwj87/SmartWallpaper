@@ -17,8 +17,10 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -26,7 +28,9 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -43,6 +47,7 @@ import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
+import com.samsung.app.smartwallpaper.view.SearchBox;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
@@ -74,6 +79,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     int deltaY;
 
     private TextView tv_title;
+    private SearchBox searchbox;
     private ImageButton ib_myfavoritelist;
     private ImageButton ib_close;
     private TextView tv_hint;
@@ -118,14 +124,21 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         ArrayList<Integer> voteUpCntList = null;
         boolean isTagMatched = false;//搜索结果中，是否全部属于tag匹配到的
         boolean isTagPartialMatched = false;//搜索结果 全匹配或部分匹配
+        Command cmd = null;
         if(intent != null) {
-            Command cmd = (Command)intent.getSerializableExtra("command");
-            Log.d(TAG, "cmd="+cmd.toString());
-            isTagMatched = cmd.getBooleanExtra("isTagMatched");
-            isTagPartialMatched = cmd.getBooleanExtra("isTagPartialMatched");
-            hashCodeList = cmd.getHashCodeList();
-            voteUpCntList = cmd.getVoteUpCntList();
-            mParams = cmd.getParams();
+            cmd = (Command)intent.getSerializableExtra("command");
+            if(cmd == null){
+                Log.d(TAG, "cmd is null");
+                isTagMatched = false;
+                isTagPartialMatched = false;
+            }else {
+                Log.d(TAG, "cmd=" + cmd.toString());
+                isTagMatched = cmd.getBooleanExtra("isTagMatched");
+                isTagPartialMatched = cmd.getBooleanExtra("isTagPartialMatched");
+                hashCodeList = cmd.getHashCodeList();
+                voteUpCntList = cmd.getVoteUpCntList();
+                mParams = cmd.getParams();
+            }
         }
         Log.d(TAG, "isTagMatched="+isTagMatched);
         Log.d(TAG, "isTagPartialMatched="+isTagPartialMatched);
@@ -147,20 +160,28 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             hintText = String.format(getResources().getString(R.string.hint_tag_matched), tag1,tag2==null? "":tag2,tag3==null? "":tag3).replace("  ", " ");
             String tags = tag1 + " " + (tag2==null? "":tag2)  + " " +  (tag3==null? "":tag3);
             tags = tags.replace("  "," ").trim();
-            tv_title.setText(String.format(getResources().getString(R.string.tag_search_result),tags));
+//            tv_title.setText(String.format(getResources().getString(R.string.tag_search_result),tags));
+            searchbox.setText(tags);
         }else{//用户没有说 关键词
-            hintText = getResources().getString(R.string.hint_notag_matched);
+            if(cmd != null) {
+                hintText = getResources().getString(R.string.hint_notag_matched);
+            }
             tv_title.setText(getResources().getString(R.string.recommend_result));
         }
         showHint(hintText);
 
-        loadWallpaperItems(hashCodeList, voteUpCntList);
+        if(cmd == null) {
+            searchByKeywords(tag1, tag2, tag3);
+        }else {
+            loadWallpaperItems(hashCodeList, voteUpCntList);
+        }
     }
     public void loadWallpaperItems(ArrayList<String> hashCodeList, ArrayList<Integer> voteUpCntList) {
         Log.i(TAG, "loadWallpaperItems-hashCodeList="+hashCodeList);
 
         if(hashCodeList == null || hashCodeList.size() ==0 || voteUpCntList == null || voteUpCntList.size() ==0
                 || hashCodeList.size() != voteUpCntList.size()){
+            showEmptyView(true);
             return;
         }
 
@@ -174,6 +195,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             mWallpaperItems.add(item);
         }
         if(mWallpaperItems.size() == 0){
+            showEmptyView(true);
             return;
         }
 
@@ -203,6 +225,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         }
 
         tv_title = (TextView)findViewById(R.id.tv_title);
+        searchbox = (SearchBox)findViewById(R.id.searchbox);
         ib_myfavoritelist = (ImageButton)findViewById(R.id.ib_myfavoritelist);
         ib_close = (ImageButton)findViewById(R.id.ib_close);
         tv_hint = (TextView)findViewById(R.id.tv_hint);
@@ -219,7 +242,6 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mWallpaperRecyclerView.setAdapter(mGridAdapter);
         mWallpaperRecyclerView.setLayoutManager(mGridLayoutManager);
         mWallpaperRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        showEmptyView(mGridAdapter.getItemCount() == 0);
 
         mGridAdapter.setCallBack(this);
         mWallpaperRecyclerView.setCallBack(new WallpaperRecyclerView.CallBack() {
@@ -251,23 +273,42 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
         mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
             @Override
             public void onPageSelected(int position) {
                 updateWallpaperPreviewUI(position);
             }
-
             @Override
             public void onPageScrollStateChanged(int state) {
 
             }
         });
+        searchbox.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if(actionId == EditorInfo.IME_ACTION_DONE){
+                    String keywords = searchbox.getText().toString();
+                    searchByKeywords(keywords, null, null);
+                    searchbox.clearFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+        searchbox.setOnSearchIconClickListener(new SearchBox.OnSearchIconClickListener() {
+            @Override
+            public void onClick(View v) {
+                String keywords = searchbox.getText().toString();
+                searchByKeywords(keywords, null, null);
+                searchbox.clearFocus();
+            }
+        });
     }
 
     public void updateWallpaperPreviewUI(int position){
+        if(position >= mWallpaperItems.size()){
+            return;
+        }
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         if(wallpaperItem.hasVoteUp()) {
             ib_voteup_icon.setImageResource(R.drawable.vote_up_on);
@@ -309,10 +350,10 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     public void showEmptyView(boolean bShowEmptyView){
         Log.i(TAG, "showEmptyView="+bShowEmptyView);
         if(bShowEmptyView) {
-            mWallpaperRecyclerView.setVisibility(GONE);
+//            mWallpaperRecyclerView.setVisibility(GONE);
             tv_empty.setVisibility(VISIBLE);
         }else{
-            mWallpaperRecyclerView.setVisibility(VISIBLE);
+//            mWallpaperRecyclerView.setVisibility(VISIBLE);
             tv_empty.setVisibility(GONE);
         }
     }
@@ -379,80 +420,87 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 String tag1 = null;
                 String tag2 = null;
                 String tag3 = null;
-                if(mParams != null){
+                if(mParams != null && TextUtils.isEmpty(searchbox.getText())){
                     tag1 = mParams.get("tag1");
                     tag2 = mParams.get("tag2");
                     tag3 = mParams.get("tag3");
+                }else{
+                    tag1 = searchbox.getText().toString();
                 }
-                new AsyncTask<String, Void, ArrayList<Object>>() {
-
-                    @Override
-                    protected void onPreExecute() {
-                        super.onPreExecute();
-                        tv_next_batch.setEnabled(false);
-                    }
-
-                    @Override
-                    protected ArrayList<Object> doInBackground(String... params) {
-                        String tag1 = params[0];
-                        String tag2 = params[1];
-                        String tag3 = params[2];
-
-                        ArrayList<String> tagList = new ArrayList<>();
-                        if (!TextUtils.isEmpty(tag1)) {
-                            tagList.add(tag1);
-                        }
-                        if (!TextUtils.isEmpty(tag2)) {
-                            tagList.add(tag2);
-                        }
-                        if (!TextUtils.isEmpty(tag3)) {
-                            tagList.add(tag3);
-                        }
-
-                        HashMap<String, Object> paramMap = new HashMap<>();
-                        paramMap.put("current_hashcode", "0");
-                        paramMap.put("tag_list", tagList);
-                        paramMap.put("top_count", 10);
-
-                        JSONObject jsonObject = ApiClient.request_post(UrlConstant.SEARCH_WALLPAPER_URL, paramMap);
-                        try {
-                            int resultcode = jsonObject.getInt("response_code");
-                            if (resultcode == 200) {
-                                ArrayList<String> hashcodeList = new ArrayList<>();
-                                ArrayList<Integer> voteupcntList = new ArrayList<>();
-                                JSONArray hashcodeArray = jsonObject.getJSONArray("result");
-                                for (int i = 0; i < hashcodeArray.length(); i++) {
-                                    hashcodeList.add(hashcodeArray.getString(i));
-                                }
-                                JSONArray voteupcntArray = jsonObject.getJSONArray("voteupcnt_list");
-                                for (int i = 0; i < voteupcntArray.length(); i++) {
-                                    voteupcntList.add(voteupcntArray.getInt(i));
-                                }
-                                ArrayList<Object> lst = new ArrayList<>();
-                                lst.add(hashcodeList);
-                                lst.add(voteupcntList);
-                                return lst;
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "error=" + e.toString());
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(ArrayList<Object> lst) {
-                        super.onPostExecute(lst);
-                        tv_next_batch.setEnabled(true);
-                        if (lst != null && lst.size() ==2 ) {
-                            loadWallpaperItems((ArrayList<String>)lst.get(0), (ArrayList<Integer>)lst.get(1));
-                        } else {
-                            Toast.makeText(AppContext.appContext, "hashcodeList:null", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }.executeOnExecutor(THREAD_POOL_EXECUTOR, tag1, tag2, tag3);
+                searchByKeywords(tag1, tag2, tag3);
                 break;
         }
     }
+
+    private void searchByKeywords(String tag1, String tag2, String tag3){
+        new AsyncTask<String, Void, ArrayList<Object>>() {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                tv_next_batch.setEnabled(false);
+            }
+
+            @Override
+            protected ArrayList<Object> doInBackground(String... params) {
+                String tag1 = params[0];
+                String tag2 = params[1];
+                String tag3 = params[2];
+
+                ArrayList<String> tagList = new ArrayList<>();
+                if (!TextUtils.isEmpty(tag1)) {
+                    tagList.add(tag1);
+                }
+                if (!TextUtils.isEmpty(tag2)) {
+                    tagList.add(tag2);
+                }
+                if (!TextUtils.isEmpty(tag3)) {
+                    tagList.add(tag3);
+                }
+
+                HashMap<String, Object> paramMap = new HashMap<>();
+                paramMap.put("current_hashcode", "0");
+                paramMap.put("tag_list", tagList);
+                paramMap.put("top_count", 10);
+
+                JSONObject jsonObject = ApiClient.request_post(UrlConstant.SEARCH_WALLPAPER_URL, paramMap);
+                try {
+                    int resultcode = jsonObject.getInt("response_code");
+                    if (resultcode == 200) {
+                        ArrayList<String> hashcodeList = new ArrayList<>();
+                        ArrayList<Integer> voteupcntList = new ArrayList<>();
+                        JSONArray hashcodeArray = jsonObject.getJSONArray("result");
+                        for (int i = 0; i < hashcodeArray.length(); i++) {
+                            hashcodeList.add(hashcodeArray.getString(i));
+                        }
+                        JSONArray voteupcntArray = jsonObject.getJSONArray("voteupcnt_list");
+                        for (int i = 0; i < voteupcntArray.length(); i++) {
+                            voteupcntList.add(voteupcntArray.getInt(i));
+                        }
+                        ArrayList<Object> lst = new ArrayList<>();
+                        lst.add(hashcodeList);
+                        lst.add(voteupcntList);
+                        return lst;
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "error=" + e.toString());
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(ArrayList<Object> lst) {
+                super.onPostExecute(lst);
+                tv_next_batch.setEnabled(true);
+                if (lst != null && lst.size() ==2 ) {
+                    loadWallpaperItems((ArrayList<String>)lst.get(0), (ArrayList<Integer>)lst.get(1));
+                } else {
+                    Toast.makeText(AppContext.appContext, "hashcodeList:null", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.executeOnExecutor(THREAD_POOL_EXECUTOR, tag1, tag2, tag3);
+    }
+
     @Override
     public void onItemVoteUp(int position) {
         Log.i(TAG, "onItemVoteUp");
@@ -545,6 +593,9 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
     private void showHint(String hintText){
         Log.d(TAG, "showHint-hintText="+hintText);
+        if(TextUtils.isEmpty(hintText)){
+            return;
+        }
         tv_hint.setText(hintText);
         TranslateAnimation showTranslateAnimation = new TranslateAnimation(Animation.RELATIVE_TO_SELF,0.0f,
                 Animation.RELATIVE_TO_SELF, 0.0f,

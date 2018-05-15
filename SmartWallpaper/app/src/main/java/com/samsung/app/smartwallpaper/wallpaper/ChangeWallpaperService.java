@@ -1,6 +1,7 @@
 package com.samsung.app.smartwallpaper.wallpaper;
 
 import android.app.AlarmManager;
+import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -23,6 +24,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -156,33 +158,36 @@ public class ChangeWallpaperService extends Service {
             String action = intent.getAction();
             if(!TextUtils.isEmpty(action)) {
                 Toast.makeText(this, "onStartCommand-action=" + action, Toast.LENGTH_SHORT).show();
+                boolean isFirstTime = intent.getBooleanExtra("first_time", false);
                 if (Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER.equals(action)) {//启动自动切换壁纸
                     if (mWallpaperItems.size() == 0 && isLoadDone) {
                         Toast.makeText(this, "收藏夹中还没有壁纸，先收藏一些壁纸吧", Toast.LENGTH_SHORT).show();
-                        if(ASRDialog.getASRDialogInstance() != null){
+                        if(ASRDialog.getASRDialogInstance() != null && !isFirstTime){
                             ASRDialog.getASRDialogInstance().finish();
                         }
                     } else {
                         if (!isScheduleRunning) {
-                            initScheduleAndRun();
+                            initScheduleAndRun(isFirstTime);
                         }else{
                             Toast.makeText(mContext, "定时切换壁纸【已开启】", Toast.LENGTH_SHORT).show();
-                            if(ASRDialog.getASRDialogInstance() != null){
+                            if(ASRDialog.getASRDialogInstance() != null && !isFirstTime){
                                 ASRDialog.getASRDialogInstance().finish();
                             }
                         }
                     }
                 } else if (Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER.equals(action)) {//停止自动切换壁纸
-                    stopScheduleJob();
+                    stopScheduleJob(isFirstTime);
                 } else if (Action.ACTION_TRIGGER_CHANGE_WALLPAPER.equals(action)) {
                     if (!isScheduleRunning) {
-                        initScheduleAndRun();
+                        initScheduleAndRun(isFirstTime);
                     }
                 } else if (Action.ACTION_ENABLE_SHAKE_LISTEN.equals(action)) {
-                    enableShakeListen(true);
+                    enableShakeListen(true, isFirstTime);
                 } else if (Action.ACTION_DISABLE_SHAKE_LISTEN.equals(action)) {
-                    enableShakeListen(false);
+                    enableShakeListen(false, isFirstTime);
                 }
+            }else{
+                loadWallpaperItems();
             }
         }
         return START_STICKY;
@@ -202,7 +207,7 @@ public class ChangeWallpaperService extends Service {
         }
         releaseSchedule();
         if (mSensorManager != null) {// 取消监听器
-            enableShakeListen(false);
+            enableShakeListen(false, false);
             mSensorManager = null;
         }
 
@@ -242,17 +247,23 @@ public class ChangeWallpaperService extends Service {
                         return false;
                     }
                 });
-
-                for(File child:files){
-                    WallpaperItem item = new WallpaperItem();
-                    item.setWallpaperPath(child.getAbsolutePath());
-                    Bitmap bitmap = BitmapFactory.decodeFile(child.getAbsolutePath());
-                    if(bitmap != null){
-                        Drawable wallpaperDrawable = new BitmapDrawable(bitmap);
-                        item.setWallpaperDrawable(wallpaperDrawable);
+                if(files!=null && files.length > 0) {
+                    for (File child : files) {
+                        WallpaperItem item = new WallpaperItem();
+                        item.setWallpaperPath(child.getAbsolutePath());
+                        Bitmap bitmap = null;
+                        try {
+                            bitmap = BitmapFactory.decodeFile(child.getAbsolutePath());
+                        } catch (Exception e) {
+                            Log.e(TAG, "error=" + e.toString());
+                        }
+                        if (bitmap != null) {
+                            Drawable wallpaperDrawable = new BitmapDrawable(bitmap);
+                            item.setWallpaperDrawable(wallpaperDrawable);
+                        }
+                        mWallpaperItems.add(item);
+                        Log.i(TAG, "mWallpaperItems.add-child.getAbsolutePath()=" + child.getAbsolutePath());
                     }
-                    mWallpaperItems.add(item);
-                    Log.i(TAG,"mWallpaperItems.add-child.getAbsolutePath()="+child.getAbsolutePath());
                 }
                 return null;
             }
@@ -290,7 +301,7 @@ public class ChangeWallpaperService extends Service {
 
     private ScheduledExecutorService mScheduledExecutor = null;
     private Future mFuture = null;
-    private void initScheduleAndRun() {
+    private void initScheduleAndRun(boolean isFirstTime) {
         Log.d(TAG, "initScheduleAndRun");
         if(mScheduledExecutor == null) {
             mScheduledExecutor = Executors.newScheduledThreadPool(1);
@@ -298,7 +309,7 @@ public class ChangeWallpaperService extends Service {
                     new Runnable() {
                         @Override
                         public void run() {
-                            if(mWallpaperItems.size() > 0 && isScheduleRunning){
+                            if(mWallpaperItems.size() > 0 && isScheduleRunning && !shouldIgnore()){
                                 mHandler.removeMessages(MSG_TRIGGER_CHANGE);
                                 mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
                             }
@@ -307,41 +318,44 @@ public class ChangeWallpaperService extends Service {
                     0,
                     15000, //每隔15s切换一次
                     TimeUnit.MILLISECONDS);
-            startScheduleJob();
+            startScheduleJob(isFirstTime);
         }
     }
-    private void startScheduleJob(){
-        Log.d(TAG, "startScheduleJob-"+ASRDialog.getASRDialogInstance());
+    private void startScheduleJob(boolean isFirstTime){
+        Log.d(TAG, "startScheduleJob-isFirstTime="+isFirstTime);
         isScheduleRunning = true;
-        if(ASRDialog.getASRDialogInstance() != null){
-            ASRDialog.getASRDialogInstance().finish();
+        if(!isFirstTime) {
+            if (ASRDialog.getASRDialogInstance() != null) {
+                ASRDialog.getASRDialogInstance().finish();
+            }
+
+            SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean("enableScheduleChangeWallpaper", true);
+            editor.apply();
         }
-
-        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putBoolean("enableScheduleChangeWallpaper", true);
-        editor.apply();
-
         Toast.makeText(this, "【启动】定时切换壁纸", Toast.LENGTH_SHORT).show();
     }
-    private void stopScheduleJob(){
-        Log.d(TAG, "stopScheduleJob");
+    private void stopScheduleJob(boolean isFirstTime){
+        Log.d(TAG, "stopScheduleJob-isFirstTime="+isFirstTime);
         isScheduleRunning = false;
-        if(ASRDialog.getASRDialogInstance() != null){
-            ASRDialog.getASRDialogInstance().finish();
-        }
+        if(!isFirstTime) {
+            if (ASRDialog.getASRDialogInstance() != null) {
+                ASRDialog.getASRDialogInstance().finish();
+            }
 
-        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putBoolean("enableScheduleChangeWallpaper", false);
-        editor.apply();
+            SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean("enableScheduleChangeWallpaper", false);
+            editor.apply();
+        }
 
         Toast.makeText(this, "【关闭】定时切换壁纸", Toast.LENGTH_SHORT).show();
 
     }
     private void releaseSchedule() {
         Log.d(TAG, "releaseSchedule");
-        stopScheduleJob();
+        stopScheduleJob(false);
 
         if(mFuture != null){
             mFuture.cancel(true);
@@ -396,7 +410,7 @@ public class ChangeWallpaperService extends Service {
             if (delta > shakeThreshold && currentTime - mLastDetectTime >1000) {
                 Log.d(TAG, "shake detect");
                 mLastDetectTime = currentTime;
-                if(!mHandler.hasMessages(MSG_SENSOR_SHAKE)) {
+                if(!mHandler.hasMessages(MSG_SENSOR_SHAKE) && !shouldIgnore()) {
                     mHandler.sendEmptyMessage(MSG_SENSOR_SHAKE);
                 }
             }
@@ -407,11 +421,12 @@ public class ChangeWallpaperService extends Service {
 
         }
     };
-    private void enableShakeListen(boolean enable){
+    private void enableShakeListen(boolean enable,boolean isFirstTime){
+        Log.d(TAG, "enableShakeListen-enable="+enable+", isFirstTime="+isFirstTime);
         if(mSensorManager == null){
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         }
-        if(ASRDialog.getASRDialogInstance() != null){
+        if(ASRDialog.getASRDialogInstance() != null && !isFirstTime){
             ASRDialog.getASRDialogInstance().finish();
         }
 
@@ -422,11 +437,25 @@ public class ChangeWallpaperService extends Service {
             mSensorManager.unregisterListener(sensorEventListener);
             Toast.makeText(this, "【关闭】摇一摇换壁纸", Toast.LENGTH_SHORT).show();
         }
-
-        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putBoolean("enableShakeListen", enable);
-        editor.apply();
+        if(!isFirstTime) {
+            SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean("enableShakeListen", enable);
+            editor.apply();
+        }
     }
 
+    private KeyguardManager mKeyguardManager;
+    private PowerManager mPowerManager;
+    private boolean shouldIgnore() {
+        if (mKeyguardManager == null) {
+            mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        }
+        if (mPowerManager == null) {
+            mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        }
+        boolean ignore = !mPowerManager.isScreenOn();
+        ignore |= mKeyguardManager.inKeyguardRestrictedInputMode();
+        return ignore;
+    }
 }

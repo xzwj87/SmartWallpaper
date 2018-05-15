@@ -6,13 +6,10 @@
         android:orientation="vertical"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:background="#eaeaea">
+        android:background="#fafafa">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#fafafa"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
             android:padding="10dp"
             android:gravity="center_vertical">
             <TextView
@@ -22,39 +19,20 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:textColor="@android:color/black"
-                android:text="@string/search_result"
+                android:text="@string/my_upload_list"
                 android:textStyle="bold"
                 android:textSize="20sp"/>
-            <com.samsung.app.smartwallpaper.view.SearchBox
-                android:id="@+id/searchbox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_toStartOf="@id/ib_myfavoritelist"
-                android:layout_toEndOf="@+id/tv_title"
-                android:drawableEnd="@drawable/search"
-                android:background="@android:drawable/editbox_background_normal"
-                android:windowSoftInputMode="adjustNothing|stateHidden"
-                android:textColor="#000"
-                android:textColorHint="#bfbfbf"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:paddingStart="10dip"
-                android:inputType="text"
-                android:maxLines="1"
-                android:imeOptions="actionDone"
-                android:textColorHighlight="@android:color/holo_blue_bright"
-                android:hint="@string/key_words"/>
             <ImageButton
-                android:id="@+id/ib_myfavoritelist"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:id="@+id/ib_upload"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:padding="5dp"
                 android:scaleType="centerCrop"
                 android:layout_toStartOf="@+id/ib_close"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="8dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/myfavoritelist"/>
+                android:src="@drawable/upload"/>
             <ImageButton
                 android:id="@+id/ib_close"
                 android:layout_width="wrap_content"
@@ -70,6 +48,12 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
+            <ProgressBar
+                android:id="@+id/pb_loadingwait"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
             <TextView
                 android:id="@+id/tv_empty"
                 android:layout_width="wrap_content"
@@ -77,7 +61,7 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:textColor="@android:color/black"
-                android:text="服务器异常\n连接超时!"
+                android:text="找不到壁纸"
                 android:textSize="16sp"/>
             <com.samsung.app.smartwallpaper.view.WallpaperRecyclerView
                 android:id="@+id/wallpaper_recycleview"
@@ -101,16 +85,6 @@
                 android:textSize="16sp"
                 android:textColor="@android:color/white"/>
         </FrameLayout>
-        <TextView
-            android:id="@+id/tv_next_batch"
-            android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_margin="4dp"
-            android:padding="5dp"
-            android:gravity="center"
-            android:background="?android:attr/selectableItemBackground"
-            android:text="换一批"
-            android:textSize="18sp" />
     </LinearLayout>
     <FrameLayout
         android:id="@+id/fl_wallpaper_preview"
@@ -123,60 +97,22 @@
             android:id="@+id/view_paper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tv_apply"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:paddingBottom="8dp">
-            <ImageButton
-                android:id="@+id/ib_voteup_icon"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:layout_marginStart="8dp"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentBottom="true"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/vote_up_off"
-                android:scaleType="fitXY"/>
-            <TextView
-                android:id="@+id/tv_voteup_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left"
-                android:minWidth="15dp"
-                android:layout_toEndOf="@+id/ib_voteup_icon"
-                android:layout_alignBottom="@+id/ib_voteup_icon"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="14sp"/>
-            <ImageButton
-                android:id="@+id/ib_favorite"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:layout_toEndOf="@+id/tv_voteup_count"
-                android:layout_alignParentBottom="true"
-                android:layout_marginStart="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/favorite_off"
-                android:scaleType="fitXY"/>
-            <TextView
-                android:id="@+id/tv_apply"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:paddingEnd="10dp"
-                android:paddingStart="10dp"
-                android:paddingTop="5dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:text="应用"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:textSize="18sp"/>
-        </RelativeLayout>
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:layout_gravity="bottom|end"
+            android:paddingEnd="10dp"
+            android:paddingStart="10dp"
+            android:paddingTop="5dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:text="应用"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp"/>
         <ImageButton
             android:id="@+id/ib_share"
             android:layout_width="38dp"

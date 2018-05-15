@@ -4,8 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.DragEvent;
@@ -19,34 +17,26 @@ import android.view.animation.ScaleAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.samsung.app.smartwallpaper.R;
-import com.samsung.app.smartwallpaper.UploadListActivity;
-import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
-import com.samsung.app.smartwallpaper.command.RuleId;
-import com.samsung.app.smartwallpaper.utils.FileUtil;
 import com.samsung.app.smartwallpaper.utils.FileUtils;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.util.ArrayList;
 
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_FAVORITE_WALLPAPER;
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_WALLPAPER;
-
 /**
  * Created by samsung on 2018/3/16.
  * Author: my2013.wang@samsung.com
  */
 
-public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteWallpaperGridAdapter.WallpaperViewHolder> implements
+public class UploadWallpaperGridAdapter extends RecyclerView.Adapter<UploadWallpaperGridAdapter.WallpaperViewHolder> implements
         View.OnClickListener{
 
-    private static final String TAG = "FavoriteWallpaperGridAdapter";
+    private static final String TAG = "UploadWallpaperGridAdapter";
 
     private LayoutInflater inflater;
     private Context mContext;
@@ -55,7 +45,7 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
     private static float ratio=2.0f;//屏幕高宽比
 
-    public FavoriteWallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
+    public UploadWallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
         inflater = LayoutInflater.from(context);
         mRecyclerView = recyclerView;
         mContext = context;
@@ -69,44 +59,26 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
     @Override
     public WallpaperViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = inflater.inflate(R.layout.favoritewallpaper_item_grid, parent , false);
+        View view = inflater.inflate(R.layout.uploadwallpaper_item_grid, parent , false);
         WallpaperViewHolder viewHolder = new WallpaperViewHolder(view);
         return viewHolder;
     }
 
     @Override
     public void onBindViewHolder(final WallpaperViewHolder holder, int position) {
-        if(position == 0){
-            holder.fl_item.setTag(position);
-            holder.fl_item.setOnClickListener(this);
-            for(int i=0;i<holder.fl_item.getChildCount();i++){
-                View child = holder.fl_item.getChildAt(i);
-                if(child == holder.tv_my_uploads){
-                    child.setVisibility(View.VISIBLE);
-                }else{
-                    child.setVisibility(View.GONE);
-                }
-            }
-            return;
-        }else{
-            for(int i=0;i<holder.fl_item.getChildCount();i++){
-                View child = holder.fl_item.getChildAt(i);
-                if(child == holder.tv_my_uploads){
-                    child.setVisibility(View.GONE);
-                }else{
-                    child.setVisibility(View.VISIBLE);
-                }
-            }
-        }
-
-        WallpaperItem wallpaperItem = mWallpaperItems.get(position-1);
+        WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         holder.fl_item.setTag(position);
-        holder.iv_delete.setTag(position);
+        holder.iv_voteup_icon.setTag(position);
+        holder.tv_voteup_count.setTag(position);
         holder.tv_apply.setTag(position);
         holder.ib_share.setTag(position);
 
+        wallpaperItem.setVoteUpView(holder.tv_voteup_count);
+        wallpaperItem.loadVoteUpCount(wallpaperItem.getHashCode());
+        holder.iv_voteup_icon.setImageResource(R.drawable.vote_up_off);
+        holder.iv_voteup_icon.setVisibility(View.GONE);
+
         holder.fl_item.setOnClickListener(this);
-        holder.iv_delete.setOnClickListener(this);
         holder.tv_apply.setOnClickListener(this);
         holder.ib_share.setOnClickListener(this);
 
@@ -142,22 +114,15 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
     @Override
     public int getItemCount() {
         if(mWallpaperItems == null){
-            return 1;
+            return 0;
         }
-        return mWallpaperItems.size()+1;
+        return mWallpaperItems.size();
     }
 
     @Override
     public void onClick(final View v) {
         int id = v.getId();
-        int pos = (int)v.getTag();
-        if(pos == 0){
-            Intent intent = new Intent(mContext, UploadListActivity.class);
-            mContext.startActivity(intent);
-            return;
-        }
-
-        pos--;
+        final int pos = (int)v.getTag();
         final WallpaperItem wallpaperItem = mWallpaperItems.get(pos);
         ImageView view = null;
         switch (id){
@@ -168,12 +133,6 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
                 if(mCb != null) {
                     mCb.onItemClick(pos);
                 }
-                break;
-            case R.id.iv_delete:
-                startShakeAnimation(v);
-                FileUtils.deleteFileWithPath(wallpaperItem.getWallpaperPath());
-                mWallpaperItems.remove(pos);
-                notifyDataSetChanged();
                 break;
             case R.id.tv_apply:
                 startScaleAnimation(v);
@@ -267,19 +226,19 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
     public static class WallpaperViewHolder extends RecyclerView.ViewHolder{
         FrameLayout fl_item;
         ImageView iv_wallpaper;
-        ImageView iv_delete;
+        ImageView iv_voteup_icon;
+        TextView tv_voteup_count;
         TextView tv_apply;
         ImageButton ib_share;
-        TextView tv_my_uploads;
 
         public WallpaperViewHolder(View itemView) {
             super(itemView);
             fl_item = (FrameLayout)itemView.findViewById(R.id.fl_item);
             iv_wallpaper = (ImageView)itemView.findViewById(R.id.iv_wallpaper);
-            iv_delete = (ImageView)itemView.findViewById(R.id.iv_delete);
+            iv_voteup_icon = (ImageView)itemView.findViewById(R.id.iv_voteup_icon);
+            tv_voteup_count = (TextView)itemView.findViewById(R.id.tv_voteup_count);
             tv_apply = (TextView)itemView.findViewById(R.id.tv_apply);
             ib_share = (ImageButton)itemView.findViewById(R.id.ib_share);
-            tv_my_uploads = (TextView)itemView.findViewById(R.id.tv_my_uploads);
         }
     }
 

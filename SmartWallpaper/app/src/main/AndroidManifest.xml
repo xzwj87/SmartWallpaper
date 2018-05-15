@@ -25,6 +25,7 @@
     <application
         android:name=".AppContext"
         android:allowBackup="true"
+        android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -115,6 +116,7 @@
         </activity>
         <activity android:name=".WallpaperListActivity"/>
         <activity android:name=".FavoriteListActivity"/>
+        <activity android:name=".UploadListActivity" android:launchMode="singleInstance"/>
 
         <receiver android:name="com.samsung.app.smartwallpaper.broadcastreceiver.MyBroadcastReceiver" >
             <intent-filter>
@@ -134,6 +136,6 @@
         <meta-data
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/provider_paths" />
-    </provider>
+        </provider>
     </application>
 </manifest>

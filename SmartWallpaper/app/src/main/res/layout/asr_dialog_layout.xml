@@ -176,16 +176,17 @@
         android:scaleType="centerCrop"
         android:layout_margin="5dp"
         android:layout_alignParentStart="true"
+        android:visibility="gone"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@drawable/help"/>
     <ImageButton
         android:id="@+id/main_btn"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:padding="2dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:padding="5dp"
         android:scaleType="centerCrop"
-        android:layout_margin="5dp"
-        android:layout_toEndOf="@+id/user_manual_btn"
+        android:layout_margin="8dp"
+        android:layout_alignParentStart="true"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@drawable/main"/>
     <ImageButton
