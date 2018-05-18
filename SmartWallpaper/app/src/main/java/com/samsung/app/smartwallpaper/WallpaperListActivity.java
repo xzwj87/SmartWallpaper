@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -54,7 +55,12 @@ import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -181,7 +187,8 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
         if(hashCodeList == null || hashCodeList.size() ==0 || voteUpCntList == null || voteUpCntList.size() ==0
                 || hashCodeList.size() != voteUpCntList.size()){
-            showEmptyView(true);
+//            showEmptyView(true);
+            loadPreloadWallpaper();
             return;
         }
 
@@ -189,7 +196,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         for(int i=0;i<hashCodeList.size();i++){
             String hashCode = hashCodeList.get(i);
             int voteUpCnt = voteUpCntList.get(i);
-            WallpaperItem item = new WallpaperItem(hashCode);
+            WallpaperItem item = new WallpaperItem();
             item.setHashCode(hashCode);
             item.setVoteupCount(voteUpCnt);
             mWallpaperItems.add(item);
@@ -402,7 +409,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             case R.id.tv_apply:
                 pos = mViewPager.getCurrentItem();
                 wallpaperItem = mWallpaperItems.get(pos);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
             case R.id.ib_share:
                 pos = mViewPager.getCurrentItem();
@@ -433,8 +440,8 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     }
 
     private void searchByKeywords(String tag1, String tag2, String tag3){
+        Log.i(TAG, "searchByKeywords-tag1="+tag1+",tag2="+tag2+",tag3="+tag3);
         new AsyncTask<String, Void, ArrayList<Object>>() {
-
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
@@ -495,11 +502,65 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 if (lst != null && lst.size() ==2 ) {
                     loadWallpaperItems((ArrayList<String>)lst.get(0), (ArrayList<Integer>)lst.get(1));
                 } else {
-                    Toast.makeText(AppContext.appContext, "hashcodeList:null", Toast.LENGTH_SHORT).show();
+                    loadWallpaperItems(null, null);
+//                    Toast.makeText(AppContext.appContext, "hashcodeList:null", Toast.LENGTH_SHORT).show();
                 }
             }
         }.executeOnExecutor(THREAD_POOL_EXECUTOR, tag1, tag2, tag3);
     }
+
+    public static String WALLPAPER_PRELOAD_PATH = "wallpaper/preload";
+    private void loadPreloadWallpaper(){
+        Log.i(TAG, "loadPreloadWallpaper");
+        new AsyncTask<String, Void, Boolean>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                mWallpaperItems.clear();
+            }
+
+            @Override
+            protected Boolean doInBackground(String... params) {
+                String[] fileNames = null;
+                try {
+                    fileNames = mContext.getResources().getAssets().list(WALLPAPER_PRELOAD_PATH);
+                    if (fileNames.length > 0) {
+                        for (String fileName : fileNames) {
+                            Log.i(TAG, "loadPreloadWallpaper-fileName="+fileName);
+                            WallpaperItem item = new WallpaperItem();
+                            item.setWallpaperAssertPath(WALLPAPER_PRELOAD_PATH + File.separator + fileName);
+                            item.setHashCode(fileName.substring(0, fileName.indexOf(".")));
+                            item.setVoteupCount(0);
+                            mWallpaperItems.add(item);
+                        }
+                        Collections.shuffle(mWallpaperItems);
+                        int removeCnt = mWallpaperItems.size() - 10;
+                        for(int i=0;i<removeCnt;i++){
+                            mWallpaperItems.remove(i);
+                        }
+                        return true;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean result) {
+                super.onPostExecute(result);
+                if(mWallpaperItems.size() == 0){
+                    showEmptyView(true);
+                    return;
+                }
+
+                showEmptyView(false);
+                mGridAdapter.setWallpaperItems(mWallpaperItems);
+                mWallpaperRecyclerView.scrollToPosition(0);
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
 
     @Override
     public void onItemVoteUp(int position) {

@@ -73,12 +73,14 @@ public class CommandExecutor {
                 switch (what){
                     case MSG_APPLY_WALLPAPER:
                         hashcode = bundle.getString("hashcode");
-                        boolean islockscreen = bundle.getBoolean("islockscreen");
                         Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashcode);
                         if(wallpaper != null){
-                            CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(new BitmapDrawable(wallpaper), islockscreen);
+                            CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(new BitmapDrawable(wallpaper), hashcode);
                         }else{
                             showToast("换壁纸失败");
+                        }
+                        if(ASRDialog.getASRDialogInstance() != null){
+                            ASRDialog.getASRDialogInstance().finish();
                         }
                         break;
                     case MSG_SHARE_WALLPAPER:
@@ -102,16 +104,10 @@ public class CommandExecutor {
                             }
                         }
                         break;
-                    case MSG_UPLOAD_WALLPAPER_TO_SERVER:
-
-                        break;
                     case MSG_FAVORITE_WALLPAPER:
-                        if(bundle != null) {
-                            hashcode = bundle.getString("hashcode");
-                            if(SmartWallpaperHelper.getInstance(mContext).favoriteCurrentWallpaper(hashcode)){
-                                showToast("收藏成功");
-                                return;
-                            }
+                        if(SmartWallpaperHelper.getInstance(mContext).favoriteCurrentWallpaper()){
+                            showToast("收藏成功");
+                            return;
                         }
                         showToast("收藏失败");
                         mMainHandler.post(new Runnable() {
@@ -122,20 +118,6 @@ public class CommandExecutor {
                                 }
                             }
                         });
-                        break;
-                    case MSG_FAVORITE_WALLPAPER_LIST:
-//                        SmartWallpaperHelper.getInstance(mContext).openFavoriteList();
-//                        showToast("打开壁纸收藏夹成功");
-//                        mMainHandler.post(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                if(ASRDialog.getASRDialogInstance() != null){
-//                                    ASRDialog.getASRDialogInstance().finish();
-//                                }
-//                            }
-//                        });
-                        Intent intent = new Intent(mContext, FavoriteListActivity.class);
-                        mContext.startActivity(intent);
                         break;
                     case MSG_RESTORE_WALLPAPER:
                         SmartWallpaperHelper.getInstance(mContext).restoreWallpaper();
@@ -216,42 +198,24 @@ public class CommandExecutor {
     public boolean execute(final Command cmd){
         Log.i(TAG, "execute-cmd="+cmd.toString());
         boolean handled = false;
-        if(RuleId.RULE_ID_1.equals(cmd.getRuleId())){//SetWallpaper
-
+        if(RuleId.RULE_ID_0.equals(cmd.getRuleId())){//SearchWallpaper
+            Intent intent = new Intent(mContext, WallpaperListActivity.class);
+            intent.putExtra("command", cmd);
+            mContext.startActivity(intent);
+            handled = true;
+        }if(RuleId.RULE_ID_1.equals(cmd.getRuleId())){//SetWallpaper
             boolean islockscreen = Boolean.parseBoolean(cmd.getParams().get("islockscreen"));
-            if(islockscreen){
-                ArrayList<String> hashCodeList = cmd.getHashCodeList();
-                if(hashCodeList !=null && hashCodeList.size() >0) {
-                    Message msg = Message.obtain();
-                    msg.what = MSG_APPLY_WALLPAPER;
-                    Bundle data = new Bundle();
-                    data.putString("hashcode", hashCodeList.get(0));
-                    data.putBoolean("islockscreen", islockscreen);
-                    msg.setData(data);
-                    mThreadHandler.sendMessage(msg);
-                }else{
-                    showToast("获取壁纸失败");
-                }
-                return false;
-            }
-
-            if(Action.ACTION_APPLY_WALLPAPER.equals(cmd.getAction())) {//直接应用第一个壁纸
-                ArrayList<String> hashCodeList = cmd.getHashCodeList();
-                if(hashCodeList !=null && hashCodeList.size() >0) {
-                    Message msg = Message.obtain();
-                    msg.what = MSG_APPLY_WALLPAPER;
-                    Bundle data = new Bundle();
-                    data.putString("hashcode", hashCodeList.get(0));
-                    data.putBoolean("islockscreen", islockscreen);
-                    msg.setData(data);
-                    mThreadHandler.sendMessage(msg);
-                }else{
-                    showToast("获取壁纸失败");
-                }
-            }else {
-                Intent intent = new Intent(mContext, WallpaperListActivity.class);
-                intent.putExtra("command", cmd);
-                mContext.startActivity(intent);
+            ArrayList<String> hashCodeList = cmd.getHashCodeList();
+            if(hashCodeList !=null && hashCodeList.size() >0) {
+                Message msg = Message.obtain();
+                msg.what = MSG_APPLY_WALLPAPER;
+                Bundle data = new Bundle();
+                data.putString("hashcode", hashCodeList.get(0));
+                data.putBoolean("islockscreen", islockscreen);
+                msg.setData(data);
+                mThreadHandler.sendMessage(msg);
+            }else{
+                showToast("获取壁纸失败");
             }
             handled = true;
         }else if(RuleId.RULE_ID_2.equals(cmd.getRuleId())){//VoteWallpaper
@@ -280,22 +244,17 @@ public class CommandExecutor {
             handled = true;
         }else if(RuleId.RULE_ID_4.equals(cmd.getRuleId())){//UploadWallpaperToServer
             //将壁纸上传到服务器
-            Message message = new Message();
-            mThreadHandler.sendEmptyMessage(MSG_SHARE_WALLPAPER);
+            Intent intent = new Intent(mContext, UploadListActivity.class);
+            mContext.startActivity(intent);
             handled = true;
         }else if(RuleId.RULE_ID_5.equals(cmd.getRuleId())){//FavoriteWallpaper
             //收藏壁纸
-            Message msg = Message.obtain();
-            msg.what = MSG_FAVORITE_WALLPAPER;
-            Bundle data = new Bundle();
-            data.putString("hashcode", cmd.getHashCodeList().get(0));
-            msg.setData(data);
-            mThreadHandler.sendMessage(msg);
+            mThreadHandler.sendEmptyMessage(MSG_FAVORITE_WALLPAPER);
             handled = true;
         }else if(RuleId.RULE_ID_6.equals(cmd.getRuleId())){//FavoriteWallpaperList
             //打开壁纸收藏夹
-            mThreadHandler.sendEmptyMessage(MSG_FAVORITE_WALLPAPER_LIST);
-
+            Intent intent = new Intent(mContext, FavoriteListActivity.class);
+            mContext.startActivity(intent);
             handled = true;
         }else if(RuleId.RULE_ID_7.equals(cmd.getRuleId())){//RestoreWallpaper
             //恢复壁纸
@@ -349,9 +308,9 @@ public class CommandExecutor {
     private Runnable applyWallpaperTask;
     public void executeApplyWallpaperTask(final Drawable drawable){
         Log.i(TAG, "executeApplyWallpaperTask");
-        executeApplyWallpaperTask(drawable,false);
+        executeApplyWallpaperTask(drawable, null);
     }
-    public void executeApplyWallpaperTask(final Drawable drawable, final boolean isLockScreen){
+    public void executeApplyWallpaperTask(final Drawable drawable, final String hashCode){
         Log.i(TAG, "executeApplyWallpaperTask");
         if(applyWallpaperTask != null){
             mThreadHandler.removeCallbacks(applyWallpaperTask);
@@ -360,11 +319,12 @@ public class CommandExecutor {
         applyWallpaperTask = new Runnable() {
             @Override
             public void run() {
-                if(isLockScreen){
-                    SmartWallpaperHelper.getInstance(mContext).setLockScreenWallpaper(((BitmapDrawable)drawable).getBitmap());
-                }else {
+//                if(isLockScreen){
+//                    SmartWallpaperHelper.getInstance(mContext).setLockScreenWallpaper(((BitmapDrawable)drawable).getBitmap());
+//                }else {
+                SmartWallpaperHelper.getInstance(mContext).setCurHashCode(hashCode);
                     SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(drawable);
-                }
+//                }
                 showToast("应用壁纸成功");
                 applyWallpaperTask = null;
             }
@@ -383,7 +343,10 @@ public class CommandExecutor {
         });
     }
 
-    public void uploadWallpaperTask(final String picturePath){
+    public interface CallBack{
+        void onUploadFinish(boolean success);
+    }
+    public void uploadWallpaperTask(final String picturePath, final CallBack cb){
         Log.i(TAG, "uploadWallpaperTask");
         executeTask(new Runnable() {
             @Override
@@ -391,9 +354,11 @@ public class CommandExecutor {
                 File file = new File(picturePath);
                 if(file.exists()){
                     String response = ApiClient.uploadWallpaper(picturePath);
-                    Log.d(TAG, "response="+response.toString());
+                    Log.d(TAG, "response="+response);
                     if(TextUtils.isEmpty(response)){
-                        showToast("上传壁纸失败");
+                        if(cb != null){
+                            cb.onUploadFinish(false);
+                        }
                     }else{
                         try {
                             JSONObject jsonResult = new JSONObject(response);
@@ -416,15 +381,21 @@ public class CommandExecutor {
                                         SmartWallpaperHelper.copyFile(picturePath, dstFilePath);
                                     }
                                 }
-                                showToast("上传壁纸成功");
-                                Intent intent = new Intent(mContext, UploadListActivity.class);
-                                mContext.startActivity(intent);
+                                if(cb != null){
+                                    cb.onUploadFinish(true);
+                                }
                                 return;
                             }
                         }catch (Exception e){
                             Log.e(TAG, "error="+e.toString());
                         }
-                        showToast("上传壁纸失败");
+                        if(cb != null){
+                            cb.onUploadFinish(false);
+                        }
+                    }
+                }else{
+                    if(cb != null){
+                        cb.onUploadFinish(false);
                     }
                 }
             }

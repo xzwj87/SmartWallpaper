@@ -5,6 +5,7 @@ package com.samsung.app.smartwallpaper.command;
  */
 
 public class RuleId {
+    public static final String RULE_ID_0 = "#smartwallpaper%smartwallpaper_0";
     public static final String RULE_ID_1 = "#smartwallpaper%smartwallpaper_1";
     public static final String RULE_ID_2 = "#smartwallpaper%smartwallpaper_2";
     public static final String RULE_ID_3 = "#smartwallpaper%smartwallpaper_3";

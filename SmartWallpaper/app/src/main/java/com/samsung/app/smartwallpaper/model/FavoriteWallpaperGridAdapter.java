@@ -126,7 +126,7 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(holder.iv_wallpaper);
-            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperPath());
+            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperLocalPath());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
             holder.iv_wallpaper.setImageDrawable(wallpaperItem.getWallpaperDrawable());
@@ -171,13 +171,13 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
                 break;
             case R.id.iv_delete:
                 startShakeAnimation(v);
-                FileUtils.deleteFileWithPath(wallpaperItem.getWallpaperPath());
+                FileUtils.deleteFileWithPath(wallpaperItem.getWallpaperLocalPath());
                 mWallpaperItems.remove(pos);
                 notifyDataSetChanged();
                 break;
             case R.id.tv_apply:
                 startScaleAnimation(v);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
         }
     }

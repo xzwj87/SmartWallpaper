@@ -17,6 +17,7 @@ import com.samsung.app.smartwallpaper.config.UrlConstant;
 import com.samsung.app.smartwallpaper.network.ApiClient;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
@@ -35,7 +36,7 @@ public class WallpaperItem {
     private int placeholder = R.drawable.img_placeholder;
     private boolean mHasVoteUp = false;
     private boolean mFavoriteOn = false;
-    private String mPath;
+
 
     public WallpaperItem(){
     }
@@ -91,11 +92,20 @@ public class WallpaperItem {
         return mFavoriteOn;
     }
 
-    public void setWallpaperPath(String path){
-        mPath = path;
+    private String mLocalPath;
+    public void setWallpaperLocalPath(String path){
+        mLocalPath = path;
     }
-    public String getWallpaperPath(){
-        return mPath;
+    public String getWallpaperLocalPath(){
+        return mLocalPath;
+    }
+
+    private String mAssertPath;
+    public void setWallpaperAssertPath(String path){
+        mAssertPath = path;
+    }
+    public String getWallpaperAssertPath(){
+        return mAssertPath;
     }
 
     public void setWallpaperDrawable(Drawable wallpaper){
@@ -108,6 +118,7 @@ public class WallpaperItem {
     private static String WALLPAPER_FILES_DIR = Environment.getExternalStorageDirectory() + File.separator + "wallpaper_files";
     private AsyncTask<String,Void,Boolean> mLoadTask = null;
     public void loadWallpaperByHashCode(String hashcode){
+        Log.i(TAG, "loadWallpaperByHashCode-hashcode="+hashcode);
         if(mLoadTask != null){
             mLoadTask.cancel(true);
         }
@@ -131,6 +142,17 @@ public class WallpaperItem {
                     mWallpaperDrawable = new BitmapDrawable(bitmap);
                     return true;
                 }else{
+                    if(mWallpaperView != null && !TextUtils.isEmpty(mAssertPath)) {
+                        try {
+                            InputStream in = mWallpaperView.getContext().getAssets().open(mAssertPath);
+                            bitmap = BitmapFactory.decodeStream(in);
+                            mWallpaperDrawable = new BitmapDrawable(bitmap);
+                            return true;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     String relative_path = ApiClient.getWallpaperFilePathByHashCode(hashcode);
                     Log.i(TAG, "relative_path=" + relative_path);
                     if(!TextUtils.isEmpty(relative_path)) {

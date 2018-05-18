@@ -98,7 +98,7 @@ public class UploadWallpaperGridAdapter extends RecyclerView.Adapter<UploadWallp
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(holder.iv_wallpaper);
-            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperPath());
+            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperLocalPath());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
             holder.iv_wallpaper.setImageDrawable(wallpaperItem.getWallpaperDrawable());
@@ -136,7 +136,7 @@ public class UploadWallpaperGridAdapter extends RecyclerView.Adapter<UploadWallp
                 break;
             case R.id.tv_apply:
                 startScaleAnimation(v);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
         }
     }

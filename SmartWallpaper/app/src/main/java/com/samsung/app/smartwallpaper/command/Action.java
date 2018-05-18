@@ -5,6 +5,7 @@ package com.samsung.app.smartwallpaper.command;
  */
 
 public class Action {
+    public static final String ACTION_SEARCH_WALLPAPER = "SearchWallpaper";
     public static final String ACTION_SET_WALLPAPER = "SetWallpaper";
     public static final String ACTION_VOTEUP_WALLPAPER = "VoteWallpaper";
     public static final String ACTION_SHARE_WALLPAPER = "ShareWallpaper";

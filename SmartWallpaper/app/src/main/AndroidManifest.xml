@@ -26,9 +26,9 @@
         android:name=".AppContext"
         android:allowBackup="true"
         android:largeHeap="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/logo"
+        android:logo="@drawable/logo"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <!-- 正式发布时，请替换成您自己的appId 本demo的appId会不定时下线 -->

@@ -259,7 +259,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                 break;
             case R.id.tv_apply:
                 startScaleAnimation(v);
-                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable());
+                CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaperItem.getWallpaperDrawable(), wallpaperItem.getHashCode());
                 break;
         }
     }

@@ -31,6 +31,7 @@ import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.command.RuleId;
 import com.samsung.app.smartwallpaper.config.UrlConstant;
+import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -232,7 +233,12 @@ public class ApiClient {
 				HashMap<String, Object> paramMap = new HashMap<>();
 				paramMap.put("model", "tagger");
 				paramMap.put("context", "pseudo_root");
-				paramMap.put("hashcode","01cd8cce69b5315d787baeda98cb6911");
+				String hashCode = SmartWallpaperHelper.getCurHashCode();
+				if(!TextUtils.isEmpty(hashCode)){
+					paramMap.put("hashcode", hashCode);
+				}else {
+					paramMap.put("hashcode", "01cd8cce69b5315d787baeda98cb6911");
+				}
 				paramMap.put("utteranceRaw",utteranceRaw);
 
 				JSONObject jsonObject = ApiClient.request_post(UrlConstant.HOST_URL_TS, paramMap);
@@ -258,7 +264,7 @@ public class ApiClient {
 					cmd.setUttSeg(uttSeg);
 					cmd.setResultCode(resultcode);
 
-					if(RuleId.RULE_ID_1.equals(ruleId)){
+					if(RuleId.RULE_ID_1.equals(ruleId) || RuleId.RULE_ID_0.equals(ruleId)){
 						JSONArray hashcodeArray = jsonObject.getJSONArray("hashcodelist");
 						for(int i=0;i<hashcodeArray.length();i++){
 							hashcodeList.add(hashcodeArray.getString(i));
