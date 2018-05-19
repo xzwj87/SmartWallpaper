@@ -4,11 +4,9 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,24 +17,17 @@ import android.view.animation.ScaleAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.samsung.app.smartwallpaper.R;
-import com.samsung.app.smartwallpaper.UploadListActivity;
-import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
-import com.samsung.app.smartwallpaper.command.RuleId;
-import com.samsung.app.smartwallpaper.utils.FileUtil;
 import com.samsung.app.smartwallpaper.utils.FileUtils;
+import com.samsung.app.smartwallpaper.utils.PopupWindowHelper;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.util.ArrayList;
-
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_FAVORITE_WALLPAPER;
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_WALLPAPER;
 
 /**
  * Created by samsung on 2018/3/16.
@@ -55,11 +46,26 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
     private static float ratio=2.0f;//屏幕高宽比
 
+    PopupWindowHelper contextPopupWindowHelper = null;
+    View contextMenuPopupView = null;
+    LinearLayout item_share;
+    LinearLayout item_delete;
+    LinearLayout item_apply;
+
     public FavoriteWallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
         inflater = LayoutInflater.from(context);
         mRecyclerView = recyclerView;
         mContext = context;
         ratio = (float)mContext.getResources().getDisplayMetrics().heightPixels/mContext.getResources().getDisplayMetrics().widthPixels;
+
+        contextMenuPopupView = LayoutInflater.from(mContext).inflate(R.layout.favoritelist_context_menu_popupview, null);
+        item_share = contextMenuPopupView.findViewById(R.id.item_share);
+        item_delete = contextMenuPopupView.findViewById(R.id.item_delete);
+        item_apply = contextMenuPopupView.findViewById(R.id.item_apply);
+        contextPopupWindowHelper = new PopupWindowHelper(contextMenuPopupView);
+        item_share.setOnClickListener(contextMenuItemClickListener);
+        item_delete.setOnClickListener(contextMenuItemClickListener);
+        item_apply.setOnClickListener(contextMenuItemClickListener);
     }
 
     public void setWallpaperItems(ArrayList<WallpaperItem> wallpaperItems){
@@ -76,30 +82,8 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
     @Override
     public void onBindViewHolder(final WallpaperViewHolder holder, int position) {
-        if(position == 0){
-            holder.fl_item.setTag(position);
-            holder.fl_item.setOnClickListener(this);
-            for(int i=0;i<holder.fl_item.getChildCount();i++){
-                View child = holder.fl_item.getChildAt(i);
-                if(child == holder.tv_my_uploads){
-                    child.setVisibility(View.VISIBLE);
-                }else{
-                    child.setVisibility(View.GONE);
-                }
-            }
-            return;
-        }else{
-            for(int i=0;i<holder.fl_item.getChildCount();i++){
-                View child = holder.fl_item.getChildAt(i);
-                if(child == holder.tv_my_uploads){
-                    child.setVisibility(View.GONE);
-                }else{
-                    child.setVisibility(View.VISIBLE);
-                }
-            }
-        }
 
-        WallpaperItem wallpaperItem = mWallpaperItems.get(position-1);
+        WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         holder.fl_item.setTag(position);
         holder.iv_delete.setTag(position);
         holder.tv_apply.setTag(position);
@@ -126,38 +110,48 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(holder.iv_wallpaper);
-            wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperLocalPath());
+            holder.iv_wallpaper.invalidate();
+            if(TextUtils.isEmpty(wallpaperItem.getWallpaperLocalPath())){
+                wallpaperItem.loadWallpaperByHashCode(wallpaperItem.getHashCode());
+            }else{
+                wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperLocalPath());
+            }
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
             holder.iv_wallpaper.setImageDrawable(wallpaperItem.getWallpaperDrawable());
         }
-        holder.iv_wallpaper.setOnDragListener(new View.OnDragListener() {
+
+        holder.fl_item.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onDrag(View v, DragEvent event) {
-                return false;
+            public boolean onLongClick(View view) {
+                item_share.setTag(holder.ib_share);
+                item_delete.setTag(holder.iv_delete);
+                item_apply.setTag(holder.tv_apply);
+                contextPopupWindowHelper.showFromBottom(view);
+                return true;
             }
         });
     }
-
+    private View.OnClickListener contextMenuItemClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            View target = (View)v.getTag();
+            target.callOnClick();
+            contextPopupWindowHelper.dismiss();
+        }
+    };
     @Override
     public int getItemCount() {
         if(mWallpaperItems == null){
-            return 1;
+            return 0;
         }
-        return mWallpaperItems.size()+1;
+        return mWallpaperItems.size();
     }
 
     @Override
     public void onClick(final View v) {
         int id = v.getId();
         int pos = (int)v.getTag();
-        if(pos == 0){
-            Intent intent = new Intent(mContext, UploadListActivity.class);
-            mContext.startActivity(intent);
-            return;
-        }
-
-        pos--;
         final WallpaperItem wallpaperItem = mWallpaperItems.get(pos);
         ImageView view = null;
         switch (id){
@@ -270,7 +264,6 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
         ImageView iv_delete;
         TextView tv_apply;
         ImageButton ib_share;
-        TextView tv_my_uploads;
 
         public WallpaperViewHolder(View itemView) {
             super(itemView);
@@ -279,7 +272,6 @@ public class FavoriteWallpaperGridAdapter extends RecyclerView.Adapter<FavoriteW
             iv_delete = (ImageView)itemView.findViewById(R.id.iv_delete);
             tv_apply = (TextView)itemView.findViewById(R.id.tv_apply);
             ib_share = (ImageButton)itemView.findViewById(R.id.ib_share);
-            tv_my_uploads = (TextView)itemView.findViewById(R.id.tv_my_uploads);
         }
     }
 

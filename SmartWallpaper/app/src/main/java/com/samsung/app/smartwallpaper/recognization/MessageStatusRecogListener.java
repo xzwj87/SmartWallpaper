@@ -110,7 +110,7 @@ public class MessageStatusRecogListener extends StatusRecogListener {
      */
     @Override
     public void onOfflineUnLoaded() {
-        sendStatusMessage(" 离线资源卸载成功。");
+        sendStatusMessage(" 【离线资源卸载】成功。");
     }
 
     @Override

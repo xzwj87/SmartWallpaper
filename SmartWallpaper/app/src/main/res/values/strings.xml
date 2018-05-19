@@ -1,7 +1,14 @@
 <resources>
     <string name="app_name">Voice搜壁纸</string>
+    <string name="app_info">应用程序信息</string>
+    <string name="about_smartwallpaper">关于Voice搜壁纸</string>
+    <string name="current_version">当前版本：</string>
+    <string name="check_update">检查更新</string>
+    <string name="contact_us">联系我们</string>
+    <string name="email">my2013.wang@samsung.com</string>
+
     <string name="hint_no_matched">目前壁纸库中无相关壁纸，后续我们会不断加入相关壁纸资源！暂时推荐以下壁纸。感谢您的使用</string>
-    <string name="hint_tag_matched">为您找到了以下 "%s %s %s" 壁纸</string>
+    <string name="hint_tag_matched">为您找到了以下 "%1$s %2$s %3$s" 壁纸</string>
     <string name="hint_notag_matched">为您推荐以下壁纸</string>
 
     <string name="search_result">搜索结果</string>

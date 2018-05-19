@@ -54,7 +54,9 @@
 
         <!-- 请确认集成后的包名是否正确，本demo的包名是com.baidu.speech.recognizerdemo，在build.gradle文件中查看 -->
         <service android:name="com.baidu.speech.VoiceRecognitionService" android:exported="false" />
-        <service android:name=".wallpaper.ChangeWallpaperService" android:exported="true" >
+        <service android:name=".wallpaper.ChangeWallpaperService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE">
             <intent-filter android:priority="1000" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
@@ -103,6 +105,7 @@
 
         <activity android:name=".ASRDialog"
             android:theme="@style/ASRDilaog_Theme"
+            android:launchMode="singleInstance"
             android:excludeFromRecents="true"
             android:noHistory="true">
             <intent-filter>
@@ -114,17 +117,19 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".WallpaperListActivity"/>
-        <activity android:name=".FavoriteListActivity"/>
-        <activity android:name=".UploadListActivity" android:launchMode="singleInstance"/>
+        <activity android:name=".WallpaperListActivity" android:launchMode="singleInstance"/>
+        <activity android:name=".FavoriteListActivity" android:theme="@style/ActivityWindowRightAnimStyle"/>
+        <activity android:name=".UploadListActivity" android:theme="@style/ActivityWindowRightAnimStyle"/>
+        <activity android:name=".AppInfoActivity"
+            android:label="@string/about_smartwallpaper">
+        </activity>
 
         <receiver android:name="com.samsung.app.smartwallpaper.broadcastreceiver.MyBroadcastReceiver" >
-            <intent-filter>
-                <action android:name="android.intent.action.CLOSE_SYSTEM_DIALOGS" />
-            </intent-filter>
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.CLOSE_SYSTEM_DIALOGS" />-->
+            <!--</intent-filter>-->
             <intent-filter android:priority="1000" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
 

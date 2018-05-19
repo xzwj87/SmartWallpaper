@@ -82,6 +82,10 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
         Window window = this.getWindow();
         if (window != null) {
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams lp = window.getAttributes();
+            lp.width = getResources().getDisplayMetrics().widthPixels;
+            lp.height = getResources().getDisplayMetrics().heightPixels;
+            window.setAttributes(lp);
         }
 
         tv_title = (TextView)findViewById(R.id.tv_title);
@@ -110,6 +114,11 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                 if(fromLtoR) {
                     UploadListActivity.this.finish();
                 }
+            }
+
+            @Override
+            public void onTouchUp() {
+
             }
         });
         mWallpaperRecyclerView.addItemDecoration(new UploadListActivity.SpaceItemDecoration(0));
@@ -321,10 +330,10 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                         @Override
                         public void run() {
                             if(success) {
-                                showHint("上传成功");
+                                showHint("【上传壁纸】成功");
                                 loadWallpaperItems();
                             }else{
-                                showHint("上传失败");
+                                showHint("【上传壁纸】失败");
                             }
                         }
                     });

@@ -8,8 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
@@ -26,7 +24,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,7 +32,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -51,8 +47,6 @@ import com.samsung.app.smartwallpaper.recognization.MessageStatusRecogListener;
 import com.samsung.app.smartwallpaper.recognization.RecogResult;
 import com.samsung.app.smartwallpaper.recognization.offline.OfflineRecogParams;
 import com.samsung.app.smartwallpaper.recognization.online.OnlineRecogParams;
-import com.samsung.app.smartwallpaper.utils.PermisionUtil;
-import com.samsung.app.smartwallpaper.utils.ShortcutHelper;
 import com.samsung.app.smartwallpaper.view.ASRProgressBar;
 import com.samsung.app.smartwallpaper.view.VoiceWaveAnimationView;
 
@@ -351,24 +345,25 @@ public class ASRDialog  extends Activity {
 //                }
 //            }
 //        });
-        Bitmap changeWallpaperIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "换一张", changeWallpaperIcon);
 
-        Bitmap shareIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "分享", shareIcon);
-
-        Bitmap restoreIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "还原", restoreIcon);
-
-        Bitmap voteUpIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "点赞", voteUpIcon);
-
-        Bitmap favoriteListIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "查看收藏夹", favoriteListIcon);
-
-        Bitmap selfDefineIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
-        ShortcutHelper.addShortCut(ASRDialog.this, "拍摄壁纸", selfDefineIcon);
-
+//        Bitmap changeWallpaperIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_refresh_black_24dp);
+//        Intent intent = new Intent();
+//        ShortcutHelper.addShortCut(ASRDialog.this, "换一张", changeWallpaperIcon, intent);
+//
+//        Bitmap shareIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_share_black_24dp);
+//        ShortcutHelper.addShortCut(ASRDialog.this, "分享", shareIcon);
+//
+//        Bitmap restoreIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
+//        ShortcutHelper.addShortCut(ASRDialog.this, "还原", restoreIcon);
+//
+//        Bitmap voteUpIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
+//        ShortcutHelper.addShortCut(ASRDialog.this, "点赞", voteUpIcon);
+//
+//        Bitmap favoriteListIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
+//        ShortcutHelper.addShortCut(ASRDialog.this, "查看收藏夹", favoriteListIcon);
+//
+//        Bitmap selfDefineIcon = BitmapFactory.decodeResource(getResources(), R.drawable.asr_mic);
+//        ShortcutHelper.addShortCut(ASRDialog.this, "拍摄壁纸", selfDefineIcon);
 
         main_btn = (ImageButton) mContentRoot.findViewById(R.id.main_btn);
         user_manual_btn = (ImageButton) mContentRoot.findViewById(R.id.user_manual_btn);
@@ -387,7 +382,7 @@ public class ASRDialog  extends Activity {
         unregisterHomeKeyReceiver(this);
         super.onPause();
 
-//        myRecognizer.release();
+        myRecognizer.release();
         running= false;
     }
     @Override
@@ -397,6 +392,7 @@ public class ASRDialog  extends Activity {
         running = false;
         super.onDestroy();
         mASRDialog = null;
+        myRecognizer = null;
     }
 
     private void startRecognition() {

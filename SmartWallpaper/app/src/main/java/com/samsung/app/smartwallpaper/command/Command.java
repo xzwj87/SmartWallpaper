@@ -3,7 +3,6 @@ package com.samsung.app.smartwallpaper.command;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 
 /**
  * Created by ASUS on 2017/12/21.

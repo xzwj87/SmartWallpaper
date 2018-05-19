@@ -91,7 +91,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:padding="1dp"
         android:background="@drawable/grid">
         <com.samsung.app.smartwallpaper.view.PhotoViewPager
             android:id="@+id/view_paper"
@@ -105,9 +104,7 @@
             android:focusable="true"
             android:gravity="center"
             android:layout_gravity="bottom|end"
-            android:paddingEnd="10dp"
-            android:paddingStart="10dp"
-            android:paddingTop="5dp"
+            android:padding="10dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:text="应用"
             android:textColor="@android:color/white"

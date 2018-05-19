@@ -133,7 +133,22 @@ public class ShortcutHelper {
         }
         return false;
     }
+    public static boolean addDynamicShortCut(Context context, String title, Bitmap favicon,Intent intent){
+        ShortcutManager shortcutManager = context.getSystemService(ShortcutManager.class);
+        if(shortcutManager.getDynamicShortcuts().size() < shortcutManager.getMaxShortcutCountPerActivity()){
+            long uniqueId = title.hashCode();
 
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(context, Long.toString(uniqueId))
+                    .setShortLabel(title)
+                    .setIcon(Icon.createWithBitmap(createIcon(context, favicon)))
+                    .setIntent(intent)
+                    .build();
+//            shortcutManager.setDynamicShortcuts(Arrays.asList(shortcut));
+            shortcutManager.addDynamicShortcuts(Arrays.asList(shortcut));
+            return true;
+        }
+        return false;
+    }
     //添加快捷方式到桌面
     public static boolean addPinnedShortCut(Context context, String url, String title, Bitmap favicon){
         context.sendBroadcast(createAddToHomeIntent(context, url, title, favicon));
@@ -151,6 +166,13 @@ public class ShortcutHelper {
     public static boolean addShortCut(Context context, String title, Bitmap favicon){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
             return addDynamicShortCut(context, title, favicon);
+        }
+        return false;
+    }
+
+    public static boolean addShortCut(Context context, String title, Bitmap favicon, Intent intent){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            return addDynamicShortCut(context, title, favicon, intent);
         }
         return false;
     }

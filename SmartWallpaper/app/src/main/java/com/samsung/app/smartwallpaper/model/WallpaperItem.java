@@ -1,6 +1,5 @@
 package com.samsung.app.smartwallpaper.model;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
