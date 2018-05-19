@@ -3,11 +3,10 @@ package com.samsung.app.smartwallpaper;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.logging.Handler;
 
 import com.samsung.app.smartwallpaper.command.Action;
-import com.samsung.app.smartwallpaper.utils.PermisionUtil;
 import com.samsung.app.smartwallpaper.wakeup.WakeupService;
-import com.samsung.app.smartwallpaper.utils.Logger;
 import com.samsung.app.smartwallpaper.utils.StringUtils;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 
@@ -18,56 +17,58 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.util.Log;
+
+import static com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService.JOB_ID_TIMER;
 
 public class AppContext extends Application{
+	private static final String TAG = "AppContext";
 	public static Context appContext;
 	
 	@Override
 	public void onCreate() {
+		Log.d(TAG, "onCreate");
 		super.onCreate();
 		appContext = this;
-        init();
+		init();
 	}
-
 	private void init(){
-		startService();
-	}	
-	
-	private void startService(){
+		Log.d(TAG, "init");
 		Intent intent = new Intent();
 		intent.setClass(this, WakeupService.class);
 		startService(intent);
 
-		SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
-		boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
-		if(enableChangeWallpaper) {
+		if(ChangeWallpaperService.useJobScheduler()){
+			ChangeWallpaperService.createJobAndSchedule(JOB_ID_TIMER);
+		}else{
 			intent = new Intent(this, ChangeWallpaperService.class);
-			intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
 			intent.putExtra("first_time", true);
 			startService(intent);
-		}else{
-			//仅仅只是启动服务
-			if(!isServiceRunning(ChangeWallpaperService.class.getName())) {
-				intent = new Intent(this, ChangeWallpaperService.class);
-				startService(intent);
-			}
 		}
 
+		SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+		boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
 		boolean enableShakeListen = sp.getBoolean("enableShakeListen", false);
-		if(enableShakeListen) {
-			intent = new Intent(this, ChangeWallpaperService.class);
-			intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
-			intent.putExtra("first_time", true);
-			startService(intent);
-		}else{
-			//仅仅只是启动服务
-			if(!isServiceRunning(ChangeWallpaperService.class.getName())) {
-				intent = new Intent(this, ChangeWallpaperService.class);
-				startService(intent);
+
+		if(ChangeWallpaperService.useJobScheduler()) {
+			if (enableChangeWallpaper) {
+				ChangeWallpaperService.startScheduleJob(true);
+			} else {
+				ChangeWallpaperService.stopScheduleJob(true);
 			}
+		}else{
+			intent = new Intent(this, ChangeWallpaperService.class);
+			if (enableChangeWallpaper) {
+				//启动切换壁纸
+				intent.putExtra("first_time", true);
+				intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
+			} else {
+				intent.putExtra("first_time", true);
+				intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
+			}
+			startService(intent);
 		}
+		ChangeWallpaperService.enableShakeListen(enableShakeListen, true);
 	}
 
 	/**

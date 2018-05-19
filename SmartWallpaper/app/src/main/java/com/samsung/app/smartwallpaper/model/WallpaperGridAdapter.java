@@ -7,7 +7,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,20 +17,19 @@ import android.view.animation.ScaleAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-
 
 import com.samsung.app.smartwallpaper.R;
 import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.command.RuleId;
+import com.samsung.app.smartwallpaper.utils.PopupWindowHelper;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.util.ArrayList;
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_FAVORITE_WALLPAPER;
 import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_WALLPAPER;
 
 /**
@@ -50,11 +48,29 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
     private static ArrayList<WallpaperItem> mWallpaperItems = null;
     private static float ratio=2.0f;//屏幕高宽比
 
+    PopupWindowHelper contextPopupWindowHelper = null;
+    View contextMenuPopupView = null;
+    LinearLayout item_share;
+    LinearLayout item_voteup;
+    LinearLayout item_favorite;
+    LinearLayout item_apply;
+
     public WallpaperGridAdapter(Context context, WallpaperRecyclerView recyclerView){
         inflater = LayoutInflater.from(context);
         mRecyclerView = recyclerView;
         mContext = context;
         ratio = (float)mContext.getResources().getDisplayMetrics().heightPixels/mContext.getResources().getDisplayMetrics().widthPixels;
+
+        contextMenuPopupView = LayoutInflater.from(mContext).inflate(R.layout.wallpaperlist_context_menu_popupview, null);
+        item_share = contextMenuPopupView.findViewById(R.id.item_share);
+        item_voteup = contextMenuPopupView.findViewById(R.id.item_voteup);
+        item_favorite = contextMenuPopupView.findViewById(R.id.item_favorite);
+        item_apply = contextMenuPopupView.findViewById(R.id.item_apply);
+        contextPopupWindowHelper = new PopupWindowHelper(contextMenuPopupView);
+        item_share.setOnClickListener(contextMenuItemClickListener);
+        item_voteup.setOnClickListener(contextMenuItemClickListener);
+        item_favorite.setOnClickListener(contextMenuItemClickListener);
+        item_apply.setOnClickListener(contextMenuItemClickListener);
     }
 
     public ArrayList<WallpaperItem> getWallpaperItems(){
@@ -119,18 +135,34 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(holder.iv_wallpaper);
+            holder.iv_wallpaper.invalidate();
             wallpaperItem.loadWallpaperByHashCode(wallpaperItem.getHashCode());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);
             holder.iv_wallpaper.setImageDrawable(wallpaperItem.getWallpaperDrawable());
         }
-        holder.iv_wallpaper.setOnDragListener(new View.OnDragListener() {
+
+        holder.fl_item.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onDrag(View v, DragEvent event) {
-                return false;
+            public boolean onLongClick(View view) {
+                item_share.setTag(holder.ib_share);
+                item_voteup.setTag(holder.iv_voteup_icon);
+                item_favorite.setTag(holder.iv_favorite);
+                item_apply.setTag(holder.tv_apply);
+                contextPopupWindowHelper.showFromBottom(view);
+                return true;
             }
         });
     }
+
+    private View.OnClickListener contextMenuItemClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            View target = (View)v.getTag();
+            target.callOnClick();
+            contextPopupWindowHelper.dismiss();
+        }
+    };
 
     @Override
     public int getItemCount() {
@@ -156,6 +188,11 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                 SmartWallpaperHelper.getInstance(mContext).shareWallpaper(wallpaperItem.getWallpaperDrawable());
                 break;
             case R.id.fl_item:
+                if(mCb != null) {
+                    mCb.onItemClick(pos);
+                    break;
+                }
+
                 if(hasTap){//第二次点击
                     doubleTap = true;
                 }else if(!hasTap){//第一次点击
@@ -204,7 +241,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
                                 if(mCb != null){
                                     mCb.onItemVoteUp(pos);
-                                    Toast.makeText(mContext,"双击666", Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(mContext,"双击666", Toast.LENGTH_SHORT).show();
                                 }
                             }
                             doubleTap = false;

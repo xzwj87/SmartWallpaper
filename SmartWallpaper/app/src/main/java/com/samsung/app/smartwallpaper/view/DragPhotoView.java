@@ -6,13 +6,11 @@ package com.samsung.app.smartwallpaper.view;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import uk.co.senab.photoview.PhotoView;
@@ -93,9 +91,18 @@ public class DragPhotoView extends PhotoView {
                     break;
                 case MotionEvent.ACTION_MOVE:
 
+                    int diffX = (int)Math.abs(mDownX - event.getX());
+                    int diffY = (int)Math.abs(mDownY - event.getY());
+                    if(diffX > diffY && !isTouchEvent){
+                        mScale = 1;
+                        mTranslateX = 0;
+                        mTranslateY = 0;
+                        isTouchEvent = false;
+                        return super.dispatchTouchEvent(event);
+                    }
+
                     //in viewpager
                     if (mTranslateY == 0 && mTranslateX != 0) {
-
                         //如果不消费事件，则不作操作
                         if (!isTouchEvent) {
                             mScale = 1;
@@ -162,7 +169,7 @@ public class DragPhotoView extends PhotoView {
     private void onActionMove(MotionEvent event) {
         float moveY = event.getY();
         float moveX = event.getX();
-        mTranslateX = moveX - mDownX;
+        mTranslateX = 0;//moveX - mDownX;
         mTranslateY = moveY - mDownY;
 
         //保证上划到到顶还可以继续滑动

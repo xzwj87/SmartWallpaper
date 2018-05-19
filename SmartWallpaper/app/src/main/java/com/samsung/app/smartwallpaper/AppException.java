@@ -13,9 +13,7 @@ import java.util.Date;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.Looper;
-import android.widget.Toast;
 
 import org.apache.commons.httpclient.HttpException;
 

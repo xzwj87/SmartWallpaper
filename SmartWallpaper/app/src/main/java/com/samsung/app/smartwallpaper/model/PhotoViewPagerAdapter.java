@@ -1,26 +1,16 @@
 package com.samsung.app.smartwallpaper.model;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v4.view.PagerAdapter;
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.DragEvent;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
-import com.samsung.app.smartwallpaper.WallpaperListActivity;
-import com.samsung.app.smartwallpaper.WallpaperPreviewDialog;
 import com.samsung.app.smartwallpaper.view.DragPhotoView;
 
 import java.util.ArrayList;
 
-import uk.co.senab.photoview.DefaultOnDoubleTapListener;
-import uk.co.senab.photoview.PhotoView;
 
 /**
  * Created by ASUS on 2018/5/6.
