@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.view.DragPhotoView;
 
 import java.util.ArrayList;
@@ -35,13 +36,18 @@ public class PhotoViewPagerAdapter extends PagerAdapter {
         notifyDataSetChanged();
     }
 
+    private DragPhotoView.CallBack mDragPhotoViewCb;
+    public void setDragPhotoViewCallBack(DragPhotoView.CallBack cb){
+        mDragPhotoViewCb = cb;
+    }
+
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         final DragPhotoView dragPhotoView = new DragPhotoView(mContext);
         dragPhotoView.setTag(position);
         dragPhotoView.setZoomable(true);
-        dragPhotoView.setMinScale(0.8f);
+        dragPhotoView.setMinScale(0.95f);
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(dragPhotoView);
@@ -63,12 +69,7 @@ public class PhotoViewPagerAdapter extends PagerAdapter {
                 }
             }
         });
-        dragPhotoView.setOnTapListener(new DragPhotoView.OnTapListener() {
-            @Override
-            public void onTap(DragPhotoView view) {
-
-            }
-        });
+        dragPhotoView.setCallBack(mDragPhotoViewCb);
         return dragPhotoView;
     }
 

@@ -45,6 +45,7 @@ import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
 import com.samsung.app.smartwallpaper.utils.PopupWindowHelper;
+import com.samsung.app.smartwallpaper.view.DragPhotoView;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.SearchBox;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
@@ -72,7 +73,7 @@ import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_
  */
 
 public class WallpaperListActivity extends Activity implements View.OnClickListener,
-        WallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
+        WallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack, DragPhotoView.CallBack{
     private final String TAG = "WallpaperListActivity";
     private Context mContext;
     private View mDecorView;
@@ -354,6 +355,10 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             @Override
             public void onPageSelected(int position) {
                 updateWallpaperPreviewUI(position);
+                View currentView = mViewPager.findViewWithTag(position);
+                if(currentView != null && currentView instanceof DragPhotoView){
+                    ((DragPhotoView)currentView).setScale(1);
+                }
             }
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -427,11 +432,38 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         }
         tv_voteup_count.setText(wallpaperItem.getVoteupCount() + "赞");
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
+
+        updateAlpha(1.0f);
+    }
+
+    public void updateAlpha(float alpha){
+        tv_apply.setAlpha(alpha);
+        ib_share.setAlpha(alpha);
+        ib_voteup_icon.setAlpha(alpha);
+        ib_favorite.setAlpha(alpha);
+        tv_voteup_count.setAlpha(alpha);
+        tv_index.setAlpha(alpha);
     }
 
     @Override
     public void onExitWallpaperPreview() {
         hideWallpaperPreview();
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionDown() {
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionMove(float translateY, float scale, int alpha) {
+        updateAlpha(alpha/255.0f);
+    }
+
+    @Override
+    public void onActionUp() {
+        updateAlpha(1.0f);
     }
 
     class SpaceItemDecoration extends RecyclerView.ItemDecoration {
@@ -798,6 +830,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mPhotoViewPagerAdapter = new PhotoViewPagerAdapter(mContext);
         mPhotoViewPagerAdapter.setWallpaperItems(mWallpaperItems);
         mPhotoViewPagerAdapter.setCallBack(this);
+        mPhotoViewPagerAdapter.setDragPhotoViewCallBack(this);
         mViewPager.setAdapter(mPhotoViewPagerAdapter);
         mViewPager.setCurrentItem(pos);
         updateWallpaperPreviewUI(pos);

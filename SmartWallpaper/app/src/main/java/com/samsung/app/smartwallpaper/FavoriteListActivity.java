@@ -31,6 +31,7 @@ import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.model.FavoriteWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
+import com.samsung.app.smartwallpaper.view.DragPhotoView;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
@@ -47,7 +48,7 @@ import static com.samsung.app.smartwallpaper.WallpaperListActivity.WALLPAPER_PRE
 import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_MY_FAVORITE_WALLPAPER_DIR;
 
 public class FavoriteListActivity extends Activity  implements View.OnClickListener,
-        FavoriteWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
+        FavoriteWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack, DragPhotoView.CallBack{
     private static final String TAG = "FavoriteListActivity";
     private Context mContext;
 
@@ -248,10 +249,15 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
     }
 
 
-
+    public void updateAlpha(float alpha){
+        tv_apply.setAlpha(alpha);
+        ib_share.setAlpha(alpha);
+        tv_index.setAlpha(alpha);
+    }
     public void updateWallpaperPreviewUI(int position){
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
+        updateAlpha(1.0f);
     }
 
     @Override
@@ -277,6 +283,23 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
     @Override
     public void onExitWallpaperPreview() {
         hideWallpaperPreview();
+        updateAlpha(1.0f);
+    }
+
+
+    @Override
+    public void onActionDown() {
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionMove(float translateY, float scale, int alpha) {
+        updateAlpha(alpha/255.0f);
+    }
+
+    @Override
+    public void onActionUp() {
+        updateAlpha(1.0f);
     }
 
     class SpaceItemDecoration extends RecyclerView.ItemDecoration {
@@ -382,6 +405,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         mPhotoViewPagerAdapter = new PhotoViewPagerAdapter(mContext);
         mPhotoViewPagerAdapter.setWallpaperItems(mWallpaperItems);
         mPhotoViewPagerAdapter.setCallBack(this);
+        mPhotoViewPagerAdapter.setDragPhotoViewCallBack(this);
         mViewPager.setAdapter(mPhotoViewPagerAdapter);
         mViewPager.setCurrentItem(pos);
         updateWallpaperPreviewUI(pos);

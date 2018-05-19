@@ -93,11 +93,22 @@ public class CommandExecutor {
                             } else {
                                 //showToast("【点赞】失败");
                             }
+                            if(ASRDialog.getASRDialogInstance() != null){
+                                ASRDialog.getASRDialogInstance().finish();
+                            }
                         }
                         break;
                     case MSG_FAVORITE_WALLPAPER:
                         if(SmartWallpaperHelper.getInstance(mContext).favoriteCurrentWallpaper()){
                             showToast("【收藏】成功");
+                            mMainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if(ASRDialog.getASRDialogInstance() != null){
+                                        ASRDialog.getASRDialogInstance().finish();
+                                    }
+                                }
+                            });
                             return;
                         }
                         showToast("【收藏】失败");
@@ -105,7 +116,7 @@ public class CommandExecutor {
                             @Override
                             public void run() {
                                 if(ASRDialog.getASRDialogInstance() != null){
-                                    ASRDialog.getASRDialogInstance().onCommandFinish(false);
+                                    ASRDialog.getASRDialogInstance().finish();
                                 }
                             }
                         });

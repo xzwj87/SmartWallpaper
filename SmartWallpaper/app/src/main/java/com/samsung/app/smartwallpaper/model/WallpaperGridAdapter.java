@@ -96,7 +96,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
         holder.fl_item.setTag(position);
         holder.iv_voteup_icon.setTag(position);
-        holder.tv_voteup_count.setTag(position);
+        holder.tv_voteup_count.setTag(holder.iv_voteup_icon);
         holder.iv_favorite.setTag(position);
         holder.tv_apply.setTag(position);
         holder.ib_share.setTag(position);
@@ -115,6 +115,7 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
 
         holder.fl_item.setOnClickListener(this);
         holder.iv_voteup_icon.setOnClickListener(this);
+        holder.tv_voteup_count.setOnClickListener(contextMenuItemClickListener);
         holder.iv_favorite.setOnClickListener(this);
         holder.tv_apply.setOnClickListener(this);
         holder.ib_share.setOnClickListener(this);
@@ -249,6 +250,9 @@ public class WallpaperGridAdapter extends RecyclerView.Adapter<WallpaperGridAdap
                         }
                     }, 250);
                 }
+
+                break;
+            case R.id.tv_voteup_count:
 
                 break;
             case R.id.iv_voteup_icon:

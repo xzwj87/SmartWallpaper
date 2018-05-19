@@ -30,5 +30,4 @@ public class PhotoViewPager extends ViewPager{
             return false;
         }
     }
-
 }

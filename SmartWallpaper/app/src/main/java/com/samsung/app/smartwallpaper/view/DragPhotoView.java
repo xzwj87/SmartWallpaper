@@ -11,13 +11,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import uk.co.senab.photoview.PhotoView;
-
-/**
- * Created by wing on 2016/12/22.
- */
 
 public class DragPhotoView extends PhotoView {
     private Paint mPaint;
@@ -37,11 +34,11 @@ public class DragPhotoView extends PhotoView {
     private final static int MAX_TRANSLATE_Y = 500;
 
     private final static long DURATION = 300;
-    private boolean canFinish = false;
     private boolean isAnimate = false;
 
     //is event on PhotoView
-    private boolean isTouchEvent = false;
+    private boolean isTouch = false;
+    private boolean isSwipe = false;
     private OnTapListener mTapListener;
     private OnExitListener mExitListener;
 
@@ -80,72 +77,51 @@ public class DragPhotoView extends PhotoView {
     public boolean dispatchTouchEvent(MotionEvent event) {
         //only scale == 1 can drag
         if (getScale() == 1) {
-
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     onActionDown(event);
-
-                    //change the canFinish flag
-                    canFinish = !canFinish;
-
+                    isTouch = false;
+                    isSwipe = false;
                     break;
                 case MotionEvent.ACTION_MOVE:
-
-                    int diffX = (int)Math.abs(mDownX - event.getX());
-                    int diffY = (int)Math.abs(mDownY - event.getY());
-                    if(diffX > diffY && !isTouchEvent){
-                        mScale = 1;
-                        mTranslateX = 0;
-                        mTranslateY = 0;
-                        isTouchEvent = false;
+                    if(isSwipe){
                         return super.dispatchTouchEvent(event);
                     }
-
-                    //in viewpager
-                    if (mTranslateY == 0 && mTranslateX != 0) {
-                        //如果不消费事件，则不作操作
-                        if (!isTouchEvent) {
-                            mScale = 1;
-                            return super.dispatchTouchEvent(event);
-                        }
-                    }
-
-                    //single finger drag  down
-                    if (mTranslateY >= 0 && event.getPointerCount() == 1) {
+                    if(isTouch){
                         onActionMove(event);
-
-                        //如果有上下位移 则不交给viewpager
-                        if (mTranslateY != 0) {
-                            isTouchEvent = true;
-                        }
                         return true;
                     }
-
-
-                    //防止下拉的时候双手缩放
-                    if (mTranslateY >= 0 && mScale < 0.95) {
+                    int diffX = (int) Math.abs(mDownX - event.getX());
+                    int diffY = (int) Math.abs(mDownY - event.getY());
+                    int distance = (int)Math.sqrt(diffX*diffX + diffY*diffY);
+                    if(distance < 10){
                         return true;
+                    }
+                    if (diffX > diffY) {
+                        mTranslateX = 0;
+                        mTranslateY = 0;
+                        isTouch = false;
+                        isSwipe = true;
+                        return super.dispatchTouchEvent(event);
+                    } else if(diffX > 0 && ((float)diffY/diffX) > 1.2f || diffX == 0){
+                        isTouch = true;
+                        isSwipe = false;
+                    }else{
+                        isTouch = false;
+                        isSwipe = false;
                     }
                     break;
 
                 case MotionEvent.ACTION_UP:
                     //防止下拉的时候双手缩放
                     if (event.getPointerCount() == 1) {
-                        onActionUp(event);
-                        isTouchEvent = false;
-                        //judge finish or not
-                        postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (mTranslateX == 0 && mTranslateY == 0 && canFinish) {
-
-                                    if (mTapListener != null) {
-                                        mTapListener.onTap(DragPhotoView.this);
-                                    }
-                                }
-                                canFinish = false;
-                            }
-                        }, 300);
+                        if(isSwipe){
+                            return super.dispatchTouchEvent(event);
+                        }
+                        if(isTouch){
+                            onActionUp(event);
+                            return true;
+                        }
                     }
             }
         }
@@ -153,19 +129,14 @@ public class DragPhotoView extends PhotoView {
         return super.dispatchTouchEvent(event);
     }
 
-    private void onActionUp(MotionEvent event) {
 
-        if (mTranslateY > MAX_TRANSLATE_Y) {
-            if (mExitListener != null) {
-                mExitListener.onExit(this, mTranslateX, mTranslateY, mWidth, mHeight);
-            } else {
-                throw new RuntimeException("DragPhotoView: onExitLister can't be null ! call setOnExitListener() ");
-            }
-        } else {
-            performAnimation();
+    private void onActionDown(MotionEvent event) {
+        mDownX = event.getX();
+        mDownY = event.getY();
+        if(mCb != null){
+            mCb.onActionDown();
         }
     }
-
     private void onActionMove(MotionEvent event) {
         float moveY = event.getY();
         float moveX = event.getX();
@@ -193,8 +164,27 @@ public class DragPhotoView extends PhotoView {
         } else if (mScale > 1f) {
             mScale = 1;
         }
-
         invalidate();
+
+        if(mCb != null){
+            mCb.onActionMove(mTranslateY, mScale, mAlpha);
+        }
+    }
+    private void onActionUp(MotionEvent event) {
+
+        if(mCb != null){
+            mCb.onActionUp();
+        }
+
+        if (mTranslateY > MAX_TRANSLATE_Y) {
+            if (mExitListener != null) {
+                mExitListener.onExit(this, mTranslateX, mTranslateY, mWidth, mHeight);
+            } else {
+                throw new RuntimeException("DragPhotoView: onExitLister can't be null ! call setOnExitListener() ");
+            }
+        } else {
+            performAnimation();
+        }
     }
 
     private void performAnimation() {
@@ -279,11 +269,6 @@ public class DragPhotoView extends PhotoView {
         return animator;
     }
 
-    private void onActionDown(MotionEvent event) {
-        mDownX = event.getX();
-        mDownY = event.getY();
-    }
-
     public float getMinScale() {
         return mMinScale;
     }
@@ -312,5 +297,15 @@ public class DragPhotoView extends PhotoView {
         mTranslateX = -mWidth / 2 + mWidth * mScale / 2;
         mTranslateY = -mHeight / 2 + mHeight * mScale / 2;
         invalidate();
+    }
+
+    private CallBack mCb;
+    public void setCallBack(CallBack cb){
+        mCb = cb;
+    }
+    public interface CallBack{
+        void onActionDown();
+        void onActionMove(float translateY, float scale, int alpha);
+        void onActionUp();
     }
 }
