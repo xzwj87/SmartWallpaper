@@ -1,8 +1,6 @@
 package com.samsung.app.smartwallpaper.wallpaper;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -10,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -83,20 +82,20 @@ public class SmartWallpaperHelper {
     }
 
     //设置主屏幕壁纸
-    public synchronized boolean setHomeScreenWallpaper(Bitmap wallpaper){
-        Log.d(TAG, "setHomeScreenWallpaper-Bitmap="+wallpaper);
-        if(wallpaper == null){
-            return false;
+    public synchronized boolean setHomeScreenWallpaper(String path, boolean isAssert){
+        Log.d(TAG, "setHomeScreenWallpaper-path="+path);
+        Bitmap bitmap = null;
+        if(isAssert){//预装壁纸
+            try {
+                InputStream in = mContext.getAssets().open(path);
+                bitmap = BitmapFactory.decodeStream(in);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else{//收藏夹中的壁纸
+            bitmap = BitmapFactory.decodeFile(path);
         }
-        try {
-            previousWallpaper = getCurrentWallpaper();
-            wManager.setBitmap(wallpaper);
-            curWallpaper = wallpaper;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
+        return setHomeScreenWallpaper(bitmap);
     }
     public synchronized boolean setHomeScreenWallpaper(Drawable wallpaper){
         Log.d(TAG, "setHomeScreenWallpaper-Drawable="+wallpaper);
@@ -105,6 +104,27 @@ public class SmartWallpaperHelper {
         }
         Bitmap bitmap = ((BitmapDrawable)wallpaper).getBitmap();
         return setHomeScreenWallpaper(bitmap);
+    }
+    public synchronized boolean setHomeScreenWallpaper(Bitmap wallpaper){
+        Log.d(TAG, "setHomeScreenWallpaper-Bitmap="+wallpaper);
+        if(wallpaper == null){
+            return false;
+        }
+        try {
+            if(previousWallpaper != null && !previousWallpaper.isRecycled()){
+                previousWallpaper.recycle();
+            }
+            if(curWallpaper != null && !curWallpaper.isRecycled()){
+                curWallpaper.recycle();
+            }
+            previousWallpaper = getCurrentWallpaper();
+            wManager.setBitmap(wallpaper);
+            curWallpaper = wallpaper;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
     //设置锁屏壁纸
     public synchronized void setLockScreenWallpaper(Bitmap wallpaper) {

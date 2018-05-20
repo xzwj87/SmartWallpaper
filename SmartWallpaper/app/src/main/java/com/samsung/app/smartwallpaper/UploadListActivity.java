@@ -31,6 +31,7 @@ import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
 import com.samsung.app.smartwallpaper.model.UploadWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
+import com.samsung.app.smartwallpaper.view.DragPhotoView;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
@@ -44,7 +45,7 @@ import static android.view.View.VISIBLE;
 import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_UPLOAD_WALLPAPER_DIR;
 
 public class UploadListActivity extends Activity  implements View.OnClickListener,
-        UploadWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
+        UploadWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack, DragPhotoView.CallBack{
     private static final String TAG = "UploadListActivity";
     private Context mContext;
 
@@ -82,6 +83,10 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
         Window window = this.getWindow();
         if (window != null) {
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams lp = window.getAttributes();
+            lp.width = getResources().getDisplayMetrics().widthPixels;
+            lp.height = getResources().getDisplayMetrics().heightPixels;
+            window.setAttributes(lp);
         }
 
         tv_title = (TextView)findViewById(R.id.tv_title);
@@ -110,6 +115,11 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                 if(fromLtoR) {
                     UploadListActivity.this.finish();
                 }
+            }
+
+            @Override
+            public void onTouchUp() {
+
             }
         });
         mWallpaperRecyclerView.addItemDecoration(new UploadListActivity.SpaceItemDecoration(0));
@@ -213,10 +223,15 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
     }
 
 
-
+    public void updateAlpha(float alpha){
+        tv_apply.setAlpha(alpha);
+        ib_share.setAlpha(alpha);
+        tv_index.setAlpha(alpha);
+    }
     public void updateWallpaperPreviewUI(int position){
         WallpaperItem wallpaperItem = mWallpaperItems.get(position);
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
+        updateAlpha(1.0f);
     }
 
     @Override
@@ -242,6 +257,22 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
     @Override
     public void onExitWallpaperPreview() {
         hideWallpaperPreview();
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionDown() {
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionMove(float translateY, float scale, int alpha) {
+        updateAlpha(alpha/255.0f);
+    }
+
+    @Override
+    public void onActionUp() {
+        updateAlpha(1.0f);
     }
 
     class SpaceItemDecoration extends RecyclerView.ItemDecoration {
@@ -321,10 +352,10 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
                         @Override
                         public void run() {
                             if(success) {
-                                showHint("上传成功");
+                                showHint("【上传壁纸】成功");
                                 loadWallpaperItems();
                             }else{
-                                showHint("上传失败");
+                                showHint("【上传壁纸】失败");
                             }
                         }
                     });
@@ -348,6 +379,7 @@ public class UploadListActivity extends Activity  implements View.OnClickListene
         mPhotoViewPagerAdapter = new PhotoViewPagerAdapter(mContext);
         mPhotoViewPagerAdapter.setWallpaperItems(mWallpaperItems);
         mPhotoViewPagerAdapter.setCallBack(this);
+        mPhotoViewPagerAdapter.setDragPhotoViewCallBack(this);
         mViewPager.setAdapter(mPhotoViewPagerAdapter);
         mViewPager.setCurrentItem(pos);
         updateWallpaperPreviewUI(pos);

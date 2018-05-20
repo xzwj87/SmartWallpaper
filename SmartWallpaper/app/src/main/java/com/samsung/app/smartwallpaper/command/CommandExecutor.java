@@ -3,8 +3,6 @@ package com.samsung.app.smartwallpaper.command;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,13 +13,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.samsung.app.smartwallpaper.ASRDialog;
-import com.samsung.app.smartwallpaper.AppContext;
 import com.samsung.app.smartwallpaper.FavoriteListActivity;
 import com.samsung.app.smartwallpaper.UploadListActivity;
 import com.samsung.app.smartwallpaper.WallpaperListActivity;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
-import com.samsung.app.smartwallpaper.utils.FileUtil;
 import com.samsung.app.smartwallpaper.wallpaper.CameraLiveWallpaper;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
@@ -30,14 +26,9 @@ import com.samsung.app.smartwallpaper.wallpaper.VideoLiveWallpaper;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
-import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_MY_FAVORITE_WALLPAPER_DIR;
 import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.EXTERNAL_UPLOAD_WALLPAPER_DIR;
-import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.WALLPAPER_FILE_EXT;
-import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.saveBitmap;
 
 /**
  * Created by ASUS on 2018/4/23.
@@ -75,9 +66,9 @@ public class CommandExecutor {
                         hashcode = bundle.getString("hashcode");
                         Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashcode);
                         if(wallpaper != null){
-                            CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(new BitmapDrawable(wallpaper), hashcode);
+                            CommandExecutor.getInstance(mContext).executeApplyWallpaperTask(wallpaper, hashcode);
                         }else{
-                            showToast("换壁纸失败");
+                            showToast("【切换壁纸】失败");
                         }
                         if(ASRDialog.getASRDialogInstance() != null){
                             ASRDialog.getASRDialogInstance().finish();
@@ -98,30 +89,41 @@ public class CommandExecutor {
                         if(bundle != null) {
                             hashcode = bundle.getString("hashcode");
                             if (ApiClient.voteUpWallpaper(hashcode)) {
-                                showToast("点赞成功");
+                                showToast("【点赞】成功");
                             } else {
-                                showToast("点赞失败");
+                                //showToast("【点赞】失败");
+                            }
+                            if(ASRDialog.getASRDialogInstance() != null){
+                                ASRDialog.getASRDialogInstance().finish();
                             }
                         }
                         break;
                     case MSG_FAVORITE_WALLPAPER:
                         if(SmartWallpaperHelper.getInstance(mContext).favoriteCurrentWallpaper()){
-                            showToast("收藏成功");
+                            showToast("【收藏】成功");
+                            mMainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if(ASRDialog.getASRDialogInstance() != null){
+                                        ASRDialog.getASRDialogInstance().finish();
+                                    }
+                                }
+                            });
                             return;
                         }
-                        showToast("收藏失败");
+                        showToast("【收藏】失败");
                         mMainHandler.post(new Runnable() {
                             @Override
                             public void run() {
                                 if(ASRDialog.getASRDialogInstance() != null){
-                                    ASRDialog.getASRDialogInstance().onCommandFinish(false);
+                                    ASRDialog.getASRDialogInstance().finish();
                                 }
                             }
                         });
                         break;
                     case MSG_RESTORE_WALLPAPER:
                         SmartWallpaperHelper.getInstance(mContext).restoreWallpaper();
-                        showToast("还原到之前的壁纸成功");
+                        showToast("【还原到之前的壁纸】成功");
                         mMainHandler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -215,17 +217,17 @@ public class CommandExecutor {
                 msg.setData(data);
                 mThreadHandler.sendMessage(msg);
             }else{
-                showToast("获取壁纸失败");
+                showToast("【获取壁纸】失败");
             }
             handled = true;
         }else if(RuleId.RULE_ID_2.equals(cmd.getRuleId())){//VoteWallpaper
             if(Action.ACTION_VOTEUP_WALLPAPER.equals(cmd.getAction())) {//语音点赞执行完后的反馈
                 //反馈
                 if (cmd.getResultCode() == 200) {
-                    Toast.makeText(mContext, "点赞成功", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "【点赞】成功", Toast.LENGTH_SHORT).show();
                     handled = true;
                 } else {
-                    Toast.makeText(mContext, "点赞失败", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(mContext, "【点赞】失败", Toast.LENGTH_SHORT).show();
                     handled = false;
                 }
             }else if(Action.ACTION_TOUCH_VOTEUP_WALLPAPER.equals(cmd.getAction())){//手动点赞命令
@@ -274,27 +276,45 @@ public class CommandExecutor {
             handled = true;
         }else if(RuleId.RULE_ID_11.equals(cmd.getRuleId())){
             //打开摇一摇换壁纸功能
-            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-            intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
-            mContext.startService(intent);
+            if(ChangeWallpaperService.useJobScheduler()){
+//                ChangeWallpaperService.createJobAndSchedule(JOB_ID_ENABLE_SHAKE);
+                ChangeWallpaperService.enableShakeListen(true, false);
+            }else {
+                Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+                intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
+                mContext.startService(intent);
+            }
             handled = true;
         }else if(RuleId.RULE_ID_12.equals(cmd.getRuleId())){
             //关闭摇一摇换壁纸功能
-            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-            intent.setAction(Action.ACTION_DISABLE_SHAKE_LISTEN);
-            mContext.startService(intent);
+            if(ChangeWallpaperService.useJobScheduler()){
+//                ChangeWallpaperService.createJobAndSchedule(JOB_ID_DISABLE_SHAKE);
+                ChangeWallpaperService.enableShakeListen(false, false);
+            }else {
+                Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+                intent.setAction(Action.ACTION_DISABLE_SHAKE_LISTEN);
+                mContext.startService(intent);
+            }
             handled = true;
         }else if(RuleId.RULE_ID_13.equals(cmd.getRuleId())){
             //打开自动换壁纸功能
-            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-            intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
-            mContext.startService(intent);
+            if(ChangeWallpaperService.useJobScheduler()){
+                ChangeWallpaperService.startScheduleJob(false);
+            }else {
+                Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+                intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
+                mContext.startService(intent);
+            }
             handled = true;
         }else if(RuleId.RULE_ID_14.equals(cmd.getRuleId())){
             //关闭自动换壁纸功能
-            Intent intent = new Intent(mContext, ChangeWallpaperService.class);
-            intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
-            mContext.startService(intent);
+            if(ChangeWallpaperService.useJobScheduler()){
+                ChangeWallpaperService.stopScheduleJob(false);
+            }else {
+                Intent intent = new Intent(mContext, ChangeWallpaperService.class);
+                intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
+                mContext.startService(intent);
+            }
             handled = true;
         }
         return handled;
@@ -319,26 +339,38 @@ public class CommandExecutor {
         applyWallpaperTask = new Runnable() {
             @Override
             public void run() {
-//                if(isLockScreen){
-//                    SmartWallpaperHelper.getInstance(mContext).setLockScreenWallpaper(((BitmapDrawable)drawable).getBitmap());
-//                }else {
                 SmartWallpaperHelper.getInstance(mContext).setCurHashCode(hashCode);
-                    SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(drawable);
-//                }
-                showToast("应用壁纸成功");
+                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(drawable);
+                showToast("【设为桌面壁纸】成功");
                 applyWallpaperTask = null;
             }
         };
         executeTask(applyWallpaperTask);
     }
+    public void executeApplyWallpaperTask(final Bitmap wallpaper, final String hashCode){
+        Log.i(TAG, "executeApplyWallpaperTask");
+        if(applyWallpaperTask != null){
+            mThreadHandler.removeCallbacks(applyWallpaperTask);
+        }
 
+        applyWallpaperTask = new Runnable() {
+            @Override
+            public void run() {
+                SmartWallpaperHelper.getInstance(mContext).setCurHashCode(hashCode);
+                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
+                showToast("【设为桌面壁纸】成功");
+                applyWallpaperTask = null;
+            }
+        };
+        executeTask(applyWallpaperTask);
+    }
     public void executeUnFavoriteTask(final String hashcode){
         Log.i(TAG, "executeUnFavoriteTask");
         executeTask(new Runnable() {
             @Override
             public void run() {
                 SmartWallpaperHelper.getInstance(mContext).unFavoriteWallpaper(hashcode);
-                showToast("取消收藏成功");
+                showToast("【取消收藏】成功");
             }
         });
     }

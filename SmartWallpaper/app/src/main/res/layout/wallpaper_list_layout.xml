@@ -5,15 +5,13 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_height="match_parent"
-        android:layout_width="match_parent"
-        android:background="#eaeaea">
+        android:layout_width="match_parent">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#fafafa"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:padding="10dp"
+            android:padding="5dp"
             android:gravity="center_vertical">
             <TextView
                 android:id="@+id/tv_title"
@@ -29,7 +27,7 @@
                 android:id="@+id/searchbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toStartOf="@id/ib_myfavoritelist"
+                android:layout_toStartOf="@id/ib_close"
                 android:layout_toEndOf="@+id/tv_title"
                 android:drawableEnd="@drawable/search"
                 android:background="@android:drawable/editbox_background_normal"
@@ -37,7 +35,7 @@
                 android:textColor="#000"
                 android:textColorHint="#bfbfbf"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="3dp"
                 android:paddingStart="10dip"
                 android:inputType="text"
                 android:maxLines="1"
@@ -45,21 +43,10 @@
                 android:textColorHighlight="@android:color/holo_blue_bright"
                 android:hint="@string/key_words"/>
             <ImageButton
-                android:id="@+id/ib_myfavoritelist"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:padding="5dp"
-                android:scaleType="centerCrop"
-                android:layout_toStartOf="@+id/ib_close"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/myfavoritelist"/>
-            <ImageButton
                 android:id="@+id/ib_close"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="5dp"
+                android:padding="8dp"
                 android:scaleType="fitXY"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
@@ -100,24 +87,99 @@
                 android:text="@string/hint_no_matched"
                 android:textSize="16sp"
                 android:textColor="@android:color/white"/>
+            <ImageView
+                android:id="@+id/iv_voice"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginBottom="25dp"
+                android:layout_gravity="start|bottom"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/voice"/>
         </FrameLayout>
-        <TextView
-            android:id="@+id/tv_next_batch"
+        <LinearLayout
+            android:id="@+id/bottomBar"
             android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_margin="4dp"
-            android:padding="5dp"
-            android:gravity="center"
-            android:background="?android:attr/selectableItemBackground"
-            android:text="换一批"
-            android:textSize="18sp" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp">
+            <LinearLayout
+                android:id="@+id/ll_favoritelist"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackgroundBorderless">
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/ic_star_black_24dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/black"
+                    android:text="收藏夹"/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_nextbatch"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackgroundBorderless">
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/ic_refresh_black_24dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/black"
+                    android:text="换一批"/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_settings"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackgroundBorderless">
+                <ImageView
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/ic_settings_black_24dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/black"
+                    android:text="设置"/>
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
     <FrameLayout
         android:id="@+id/fl_wallpaper_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:padding="1dp"
         android:background="@drawable/grid">
         <com.samsung.app.smartwallpaper.view.PhotoViewPager
             android:id="@+id/view_paper"

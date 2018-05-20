@@ -1,8 +1,6 @@
 package com.samsung.app.smartwallpaper.wallpaper;
 
-import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;

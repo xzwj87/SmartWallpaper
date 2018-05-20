@@ -18,11 +18,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.samsung.app.smartwallpaper.R;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
-import com.samsung.app.smartwallpaper.utils.FileUtils;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
@@ -98,6 +96,7 @@ public class UploadWallpaperGridAdapter extends RecyclerView.Adapter<UploadWallp
 
         if(wallpaperItem.getWallpaperDrawable() == null) {
             wallpaperItem.setWallpaperView(holder.iv_wallpaper);
+            holder.iv_wallpaper.invalidate();
             wallpaperItem.loadWallpaperByPath(wallpaperItem.getWallpaperLocalPath());
         }else{
             holder.iv_wallpaper.setScaleType(ImageView.ScaleType.FIT_XY);

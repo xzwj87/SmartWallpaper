@@ -6,9 +6,6 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.service.wallpaper.WallpaperService;
 import android.util.Log;
@@ -17,9 +14,6 @@ import android.view.SurfaceHolder;
 
 import com.samsung.app.smartwallpaper.AppContext;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
-
-import java.io.File;
-import java.io.FileOutputStream;
 
 public class CameraLiveWallpaper extends WallpaperService {
 

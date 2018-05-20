@@ -3,8 +3,8 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorWhite</item>
+        <item name="colorPrimaryDark">@color/colorGray</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
     <!--@android:style/Theme.Dialog-->
@@ -21,15 +21,34 @@
         <item name="android:backgroundDimAmount">0.6</item>
         <!--<item name="android:windowAnimationStyle">@style/ActionSheetDialogAnimation</item>&lt;!&ndash;动画&ndash;&gt;-->
     </style>
-    <style name="ActivityWindowAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowAnimationStyle">@style/WindowEnterAnim</item><!--动画-->
+    <style name="ActivityWindowBottomAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/WindowEnterBottomAnim</item><!--动画-->
     </style>
-    <style name="WindowEnterAnim">
+    <style name="WindowEnterBottomAnim">
         <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_in</item>
     </style>
-    <style name="WindowExitAnim">
-        <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_out</item>
+    <style name="WindowExitBottomAnim">
+        <item name="android:windowExitAnimation">@anim/bottom_anim_dialog_out</item>
     </style>
+
+    <style name="ActivityWindowRightAnimStyle" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowFrame">@null</item><!--边框-->
+        <item name="android:windowIsFloating">true</item><!--是否浮现在activity之上@android:style/Theme.Dialog-->
+        <item name="android:windowNoTitle">true</item><!--无标题-->
+        <!--<item name="android:windowContentOverlay">@null</item>-->
+        <!--<item name="android:backgroundDimEnabled">true</item>-->
+        <!--<item name="android:windowIsTranslucent">false</item>-->
+        <!--<item name="android:windowTranslucentStatus">true</item>-->
+        <item name="android:windowBackground">@android:color/transparent</item><!--背景透明-->
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@style/WindowRightAnim</item><!--动画-->
+    </style>
+    <style name="WindowRightAnim">
+        <item name="android:windowEnterAnimation">@anim/anim_right_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_right_out</item>
+    </style>
+
+
 
     <style name="DialogWindowAnimStyle" parent="@android:style/Animation.Dialog">
         <item name="android:windowEnterAnimation">@anim/bottom_anim_dialog_in</item>
@@ -50,5 +69,30 @@
     <!--　　<item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>-->
         <item name="android:windowAnimationStyle">@style/DialogWindowAnimStyle</item>
 
+    </style>
+
+
+    <style name="AnimationUpPopup">
+        <item name="android:windowEnterAnimation">@anim/grow_fade_in_from_bottom</item>
+        <item name="android:windowExitAnimation">@anim/shrink_fade_out_from_bottom</item>
+    </style>
+
+    <style name="AnimationFromButtom" >
+        <item name="android:windowEnterAnimation">@anim/popup_form_bottom</item>
+        <item name="android:windowExitAnimation">@anim/drop_down_to_bottom</item>
+    </style>
+
+    <style name="AnimationFromTop" >
+        <item name="android:windowEnterAnimation">@anim/drop_down_from_top</item>
+        <item name="android:windowExitAnimation">@anim/hide_to_top</item>
+    </style>
+
+    <style name="MyCheckBox" parent="@android:style/Widget.Material.CompoundButton.CheckBox">
+        <!--<item name="android:colorControlActivated">@color/colorGreen</item>-->
+        <!--<item name="android:colorControlNormal">@color/colorAccent</item>-->
+    </style>
+    <style name="MySwitch" parent="@android:style/Widget.Material.CompoundButton.Switch">
+        <item name="android:colorControlActivated">@color/colorGreen</item>
+        <!--<item name="android:colorControlNormal">@color/colorAccent</item>-->
     </style>
 </resources>

@@ -1,44 +1,41 @@
 package com.samsung.app.smartwallpaper;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.TextureView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.command.Command;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.command.RuleId;
@@ -47,28 +44,28 @@ import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.network.ApiClient;
+import com.samsung.app.smartwallpaper.utils.PopupWindowHelper;
+import com.samsung.app.smartwallpaper.view.DragPhotoView;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.SearchBox;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
+import com.samsung.app.smartwallpaper.wallpaper.CameraLiveWallpaper;
+import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
+import com.samsung.app.smartwallpaper.wallpaper.VideoLiveWallpaper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
 
 import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.samsung.app.smartwallpaper.command.Action.ACTION_FAVORITE_WALLPAPER;
 import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_WALLPAPER;
 
 /**
@@ -76,7 +73,7 @@ import static com.samsung.app.smartwallpaper.command.Action.ACTION_TOUCH_VOTEUP_
  */
 
 public class WallpaperListActivity extends Activity implements View.OnClickListener,
-        WallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
+        WallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack, DragPhotoView.CallBack{
     private final String TAG = "WallpaperListActivity";
     private Context mContext;
     private View mDecorView;
@@ -86,12 +83,14 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
     private TextView tv_title;
     private SearchBox searchbox;
-    private ImageButton ib_myfavoritelist;
+    private ImageButton ib_favorite;
     private ImageButton ib_close;
     private TextView tv_hint;
     private TextView tv_empty;
     private WallpaperRecyclerView mWallpaperRecyclerView;
-    private TextView  tv_next_batch;
+    private LinearLayout ll_favoritelist;
+    private LinearLayout ll_nextbatch;
+    private LinearLayout ll_settings;
 
     private GridLayoutManager mGridLayoutManager = null;
     private WallpaperGridAdapter mGridAdapter = null;
@@ -104,18 +103,34 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     private PhotoViewPagerAdapter mPhotoViewPagerAdapter;
     private ImageButton ib_voteup_icon;
     private TextView tv_voteup_count;
-    private ImageButton ib_favorite;
     private TextView tv_apply;
     private ImageButton ib_share;
     private TextView tv_index;
+
+    private PopupWindowHelper morePopupWindowHelper;
+    private PopupWindowHelper contextPopupWindowHelper;
+    private View moreMenuPopupView;
+    private View contextMenuPopupView;
+    private LinearLayout item_myuploads;
+    private LinearLayout item_videowallpaper;
+    private LinearLayout item_camerawallpaper;
+    private LinearLayout item_schedulewallpaper;
+    private LinearLayout item_shakeswitch;
+    private LinearLayout item_about;
+    private Switch sw_schedulewallpaper, sw_shakeswitch;
+
+    private ImageView iv_voice;
+    private Runnable mRunnable = null;
 
     private static WallpaperListActivity mWallpaperListActivity = null;
     public static WallpaperListActivity getInstance(){
         return mWallpaperListActivity;
     }
 
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.i(TAG,"onCreate");
         super.onCreate(savedInstanceState);
         mContext = this;
         mWallpaperListActivity = this;
@@ -124,6 +139,23 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         initView();
         loadWallpaperItems(getIntent());
     }
+
+    @Override
+    protected void onResume() {
+        Log.i(TAG,"onResume");
+        super.onResume();
+        if(morePopupWindowHelper != null) {
+            morePopupWindowHelper.dismiss();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        Log.i(TAG,"onNewIntent");
+        super.onNewIntent(intent);
+        loadWallpaperItems(intent);
+    }
+
     public void loadWallpaperItems(Intent intent) {
         Log.i(TAG, "loadWallpaperItems-intent="+intent);
         ArrayList<String> hashCodeList = null;
@@ -212,19 +244,25 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     }
     @Override
     protected void onPause() {
+        Log.i(TAG,"onPause");
         super.onPause();
+        if(morePopupWindowHelper != null) {
+            morePopupWindowHelper.dismiss();
+        }
     }
 
     @Override
     protected void onDestroy() {
+        Log.i(TAG,"onDestroy");
         super.onDestroy();
-        if(ASRDialog.getASRDialogInstance() != null) {
-            ASRDialog.getASRDialogInstance().start();
-        }
+//        if(ASRDialog.getASRDialogInstance() != null) {
+//            ASRDialog.getASRDialogInstance().start();
+//        }
         mWallpaperListActivity = null;
     }
 
     private void initView() {
+        Log.i(TAG,"initView");
         Window window = this.getWindow();
         if (window != null) {
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -233,16 +271,22 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
         tv_title = (TextView)findViewById(R.id.tv_title);
         searchbox = (SearchBox)findViewById(R.id.searchbox);
-        ib_myfavoritelist = (ImageButton)findViewById(R.id.ib_myfavoritelist);
+        ib_favorite = (ImageButton)findViewById(R.id.ib_favorite);
         ib_close = (ImageButton)findViewById(R.id.ib_close);
         tv_hint = (TextView)findViewById(R.id.tv_hint);
         tv_empty = (TextView)findViewById(R.id.tv_empty);
         mWallpaperRecyclerView = (WallpaperRecyclerView)findViewById(R.id.wallpaper_recycleview);
-        tv_next_batch = (TextView)findViewById(R.id.tv_next_batch);
+        ll_favoritelist = (LinearLayout)findViewById(R.id.ll_favoritelist);
+        ll_nextbatch = (LinearLayout)findViewById(R.id.ll_nextbatch);
+        ll_settings = (LinearLayout)findViewById(R.id.ll_settings);
+        iv_voice = (ImageView)findViewById(R.id.iv_voice);
 
         ib_close.setOnClickListener(this);
-        ib_myfavoritelist.setOnClickListener(this);
-        tv_next_batch.setOnClickListener(this);
+        ib_favorite.setOnClickListener(this);
+        ll_favoritelist.setOnClickListener(this);
+        ll_nextbatch.setOnClickListener(this);
+        ll_settings.setOnClickListener(this);
+        iv_voice.setOnClickListener(this);
 
         mGridAdapter = new WallpaperGridAdapter(mContext, mWallpaperRecyclerView);
         mGridLayoutManager = new GridLayoutManager(mContext, 2);
@@ -251,6 +295,26 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mWallpaperRecyclerView.setItemAnimator(new DefaultItemAnimator());
 
         mGridAdapter.setCallBack(this);
+        mRunnable = new Runnable() {
+            @Override
+            public void run() {
+                final ValueAnimator animator = ValueAnimator.ofFloat(1f, 0f);
+                animator.setDuration(2000);
+                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        float alpha = (float)valueAnimator.getAnimatedValue();
+                        if(alpha < 0.05f){
+                            iv_voice.setVisibility(View.INVISIBLE);
+                            animator.cancel();
+                        }else{
+                            iv_voice.setAlpha(alpha);
+                        }
+                    }
+                });
+                animator.start();
+            }
+        };
         mWallpaperRecyclerView.setCallBack(new WallpaperRecyclerView.CallBack() {
             @Override
             public void onSwipe(boolean fromLtoR) {
@@ -261,6 +325,15 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                     mContext.startActivity(intent);
                 }
             }
+
+            @Override
+            public void onTouchUp() {
+//                iv_voice.setAlpha(1.0f);
+//                iv_voice.setVisibility(View.VISIBLE);
+//                Handler handler = new Handler();
+//                handler.removeCallbacks(mRunnable);
+//                handler.postDelayed(mRunnable, 5000);
+            }
         });
         mWallpaperRecyclerView.addItemDecoration(new SpaceItemDecoration(0));
 
@@ -268,13 +341,11 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mViewPager = (PhotoViewPager)findViewById(R.id.view_paper);
         ib_voteup_icon = (ImageButton)findViewById(R.id.ib_voteup_icon);
         tv_voteup_count = (TextView)findViewById(R.id.tv_voteup_count);
-        ib_favorite = (ImageButton)findViewById(R.id.ib_favorite);
         tv_apply = (TextView)findViewById(R.id.tv_apply);
         ib_share = (ImageButton)findViewById(R.id.ib_share);
         tv_index = (TextView)findViewById(R.id.tv_index);
 
         ib_voteup_icon.setOnClickListener(this);
-        ib_favorite.setOnClickListener(this);
         tv_apply.setOnClickListener(this);
         ib_share.setOnClickListener(this);
 
@@ -284,6 +355,10 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             @Override
             public void onPageSelected(int position) {
                 updateWallpaperPreviewUI(position);
+                View currentView = mViewPager.findViewWithTag(position);
+                if(currentView != null && currentView instanceof DragPhotoView){
+                    ((DragPhotoView)currentView).setScale(1);
+                }
             }
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -310,6 +385,34 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 searchbox.clearFocus();
             }
         });
+
+        moreMenuPopupView = LayoutInflater.from(this).inflate(R.layout.more_menu_popupview, null);
+        morePopupWindowHelper = new PopupWindowHelper(moreMenuPopupView);
+        item_myuploads = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_myuploads);
+        item_videowallpaper = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_videowallpaper);
+        item_camerawallpaper = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_camerawallpaper);
+        item_schedulewallpaper = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_schedulewallpaper);
+        item_shakeswitch = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_shakeswitch);
+        item_about = (LinearLayout)moreMenuPopupView.findViewById(R.id.item_about);
+        sw_schedulewallpaper = (Switch)moreMenuPopupView.findViewById(R.id.sw_schedulewallpaper);
+        sw_shakeswitch = (Switch)moreMenuPopupView.findViewById(R.id.sw_shakeswitch);
+
+        item_myuploads.setOnClickListener(this);
+        item_videowallpaper.setOnClickListener(this);
+        item_camerawallpaper.setOnClickListener(this);
+        item_schedulewallpaper.setOnClickListener(this);
+        item_shakeswitch.setOnClickListener(this);
+        item_about.setOnClickListener(this);
+
+        updateSwitchState();
+    }
+
+    public void updateSwitchState(){
+        SharedPreferences sp = AppContext.appContext.getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+        boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
+        boolean enableShakeListen = sp.getBoolean("enableShakeListen", false);
+        sw_schedulewallpaper.setChecked(enableChangeWallpaper);
+        sw_shakeswitch.setChecked(enableShakeListen);
     }
 
     public void updateWallpaperPreviewUI(int position){
@@ -329,11 +432,38 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         }
         tv_voteup_count.setText(wallpaperItem.getVoteupCount() + "赞");
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
+
+        updateAlpha(1.0f);
+    }
+
+    public void updateAlpha(float alpha){
+        tv_apply.setAlpha(alpha);
+        ib_share.setAlpha(alpha);
+        ib_voteup_icon.setAlpha(alpha);
+        ib_favorite.setAlpha(alpha);
+        tv_voteup_count.setAlpha(alpha);
+        tv_index.setAlpha(alpha);
     }
 
     @Override
     public void onExitWallpaperPreview() {
         hideWallpaperPreview();
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionDown() {
+        updateAlpha(1.0f);
+    }
+
+    @Override
+    public void onActionMove(float translateY, float scale, int alpha) {
+        updateAlpha(alpha/255.0f);
+    }
+
+    @Override
+    public void onActionUp() {
+        updateAlpha(1.0f);
     }
 
     class SpaceItemDecoration extends RecyclerView.ItemDecoration {
@@ -369,6 +499,9 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         int id = v.getId();
         int pos;
         WallpaperItem wallpaperItem;
+        SharedPreferences sp;
+        SharedPreferences.Editor editor;
+        Intent intent;
         switch (id){
             case R.id.ib_voteup_icon:
                 pos = mViewPager.getCurrentItem();
@@ -416,14 +549,17 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 wallpaperItem = mWallpaperItems.get(pos);
                 SmartWallpaperHelper.getInstance(mContext).shareWallpaper(wallpaperItem.getWallpaperDrawable());
                 break;
-            case R.id.ib_myfavoritelist:
-                Intent intent = new Intent(mContext, FavoriteListActivity.class);
+
+            case R.id.iv_voice:
+                intent = new Intent(this, ASRDialog.class);
+                startActivity(intent);
+                break;
+
+            case R.id.ll_favoritelist:
+                intent = new Intent(mContext, FavoriteListActivity.class);
                 mContext.startActivity(intent);
                 break;
-            case R.id.ib_close:
-                finish();
-                break;
-            case R.id.tv_next_batch:
+            case R.id.ll_nextbatch:
                 String tag1 = null;
                 String tag2 = null;
                 String tag3 = null;
@@ -436,6 +572,67 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 }
                 searchByKeywords(tag1, tag2, tag3);
                 break;
+            case R.id.ll_settings:
+                updateSwitchState();
+                morePopupWindowHelper.showAsPopUp(v, -20,40);
+                break;
+            case R.id.ib_close:
+                morePopupWindowHelper.dismiss();
+                finish();
+                break;
+            case R.id.item_myuploads:
+                intent = new Intent(mContext, UploadListActivity.class);
+                mContext.startActivity(intent);
+                morePopupWindowHelper.dismiss();
+                break;
+            case R.id.item_videowallpaper:
+                SmartWallpaperHelper.getInstance(mContext).setLiveWallpaper(VideoLiveWallpaper.class);
+                morePopupWindowHelper.dismiss();
+                break;
+            case R.id.item_camerawallpaper:
+                SmartWallpaperHelper.getInstance(mContext).setLiveWallpaper(CameraLiveWallpaper.class);
+                morePopupWindowHelper.dismiss();
+                break;
+            case R.id.item_schedulewallpaper:
+                sw_schedulewallpaper.setChecked(!sw_schedulewallpaper.isChecked());
+                if(ChangeWallpaperService.useJobScheduler()){
+                    if(sw_schedulewallpaper.isChecked()) {
+                        ChangeWallpaperService.startScheduleJob(false);
+                    }else{
+                        ChangeWallpaperService.stopScheduleJob(false);
+                    }
+                }else {
+                    intent = new Intent(this, ChangeWallpaperService.class);
+                    if (sw_schedulewallpaper.isChecked()) {
+                        //启动切换壁纸
+                        intent.setAction(Action.ACTION_ENABLE_SCHEDULE_CHANGE_WALLPAPER);
+                    } else {
+                        intent.setAction(Action.ACTION_DISABLE_SCHEDULE_CHANGE_WALLPAPER);
+                    }
+                    startService(intent);
+                }
+                break;
+            case R.id.item_shakeswitch:
+                sw_shakeswitch.setChecked(!sw_shakeswitch.isChecked());
+
+                if(ChangeWallpaperService.useJobScheduler()){
+                    ChangeWallpaperService.enableShakeListen(sw_shakeswitch.isChecked(), false);
+                }else {
+                    intent = new Intent(this, ChangeWallpaperService.class);
+                    if (sw_shakeswitch.isChecked()) {
+                        intent.setAction(Action.ACTION_ENABLE_SHAKE_LISTEN);
+                    } else {
+                        intent.setAction(Action.ACTION_DISABLE_SHAKE_LISTEN);
+                    }
+                    intent.putExtra("first_time", false);
+                    startService(intent);
+                }
+                break;
+            case R.id.item_about:
+                intent = new Intent(this, AppInfoActivity.class);
+                startActivity(intent);
+                morePopupWindowHelper.dismiss();
+                break;
         }
     }
 
@@ -445,7 +642,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                tv_next_batch.setEnabled(false);
+                ll_nextbatch.setEnabled(false);
             }
 
             @Override
@@ -498,7 +695,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             @Override
             protected void onPostExecute(ArrayList<Object> lst) {
                 super.onPostExecute(lst);
-                tv_next_batch.setEnabled(true);
+                ll_nextbatch.setEnabled(true);
                 if (lst != null && lst.size() ==2 ) {
                     loadWallpaperItems((ArrayList<String>)lst.get(0), (ArrayList<Integer>)lst.get(1));
                 } else {
@@ -633,6 +830,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         mPhotoViewPagerAdapter = new PhotoViewPagerAdapter(mContext);
         mPhotoViewPagerAdapter.setWallpaperItems(mWallpaperItems);
         mPhotoViewPagerAdapter.setCallBack(this);
+        mPhotoViewPagerAdapter.setDragPhotoViewCallBack(this);
         mViewPager.setAdapter(mPhotoViewPagerAdapter);
         mViewPager.setCurrentItem(pos);
         updateWallpaperPreviewUI(pos);

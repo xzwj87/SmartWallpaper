@@ -11,9 +11,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.util.Log;
-import android.widget.Toast;
 
+import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.wakeup.WakeupService;
+import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
+
+import static com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService.JOB_ID_TIMER;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
     private static final String LOG_TAG = "HomeReceiver";
@@ -35,39 +38,48 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             if (SYSTEM_DIALOG_REASON_HOME_KEY.equals(reason)) {
                 // 短按Home键
                 Log.i(LOG_TAG, "homekey");
-                Toast.makeText(context, "检查到短按Home键",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context, "检查到短按Home键",Toast.LENGTH_SHORT).show();
             }
             else if (SYSTEM_DIALOG_REASON_RECENT_APPS.equals(reason)) {
                 // 长按Home键 或者 activity切换键
                 Log.i(LOG_TAG, "long press home key or activity switch");
-                Toast.makeText(context, "检查到长按Home键",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context, "检查到长按Home键",Toast.LENGTH_SHORT).show();
             }
             else if (SYSTEM_DIALOG_REASON_LOCK.equals(reason)) {
                 // 锁屏
                 Log.i(LOG_TAG, "lock");
-                Toast.makeText(context, "检查到锁屏",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context, "检查到锁屏",Toast.LENGTH_SHORT).show();
             }
             else if (SYSTEM_DIALOG_REASON_ASSIST.equals(reason)) {
                 // samsung 长按Home键
                 Log.i(LOG_TAG, "assist");
-                Toast.makeText(context, "检查Samsung长按Home键",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context, "检查Samsung长按Home键",Toast.LENGTH_SHORT).show();
             }
 
-        }else if("android.intent.action.BOOT_COMPLETED".equals(action) || "android.media.AUDIO_BECOMING_NOISY".equals(action)){
-            Intent i = new Intent(context, MyBroadcastReceiver.class);
-            intent.setAction("arui.alarm.action");
-            PendingIntent sender = PendingIntent.getBroadcast(context, 0,
-                    intent, 0);
-            long firstime = SystemClock.elapsedRealtime();
-            AlarmManager am = (AlarmManager) context
-                    .getSystemService(Context.ALARM_SERVICE);
-            // 10秒一个周期,不停的发送广播
-            am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstime,
-                    10 * 1000, sender);
-        }else if("arui.alarm.action".equals(action)){
-            Intent service = new Intent(context, WakeupService.class);
-            context.startService(service);
-//            Toast.makeText(context, "AUDIO_BECOMING_NOISY-启动wakeup service",Toast.LENGTH_SHORT).show();
+        }else if("android.intent.action.BOOT_COMPLETED".equals(action)) {
+//            Intent i = new Intent(context, MyBroadcastReceiver.class);
+//            intent.setAction("arui.alarm.action");
+//            PendingIntent sender = PendingIntent.getBroadcast(context, 0,
+//                    intent, 0);
+//            long firstime = SystemClock.elapsedRealtime();
+//            AlarmManager am = (AlarmManager) context
+//                    .getSystemService(Context.ALARM_SERVICE);
+//            // 10秒一个周期,不停的发送广播
+//            am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstime,
+//                    10 * 1000, sender);
+
+            if (ChangeWallpaperService.useJobScheduler()) {
+                ChangeWallpaperService.createJobAndSchedule(JOB_ID_TIMER);
+            } else {
+                intent = new Intent(context, ChangeWallpaperService.class);
+                intent.putExtra("first_time", true);
+                context.startService(intent);
+            }
         }
+//        }else if("arui.alarm.action".equals(action)){
+//            Intent service = new Intent(context, WakeupService.class);
+//            context.startService(service);
+////            Toast.makeText(context, "AUDIO_BECOMING_NOISY-启动wakeup service",Toast.LENGTH_SHORT).show();
+//        }
     }
 }

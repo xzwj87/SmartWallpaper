@@ -1,7 +1,6 @@
 package com.samsung.app.smartwallpaper.network;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -226,80 +225,7 @@ public class ApiClient {
 
 			@Override
 			protected Command doInBackground(String... params) {
-				String utteranceRaw = params[0];
-				if(TextUtils.isEmpty(utteranceRaw)){
-					return null;
-				}
-				HashMap<String, Object> paramMap = new HashMap<>();
-				paramMap.put("model", "tagger");
-				paramMap.put("context", "pseudo_root");
-				String hashCode = SmartWallpaperHelper.getCurHashCode();
-				if(!TextUtils.isEmpty(hashCode)){
-					paramMap.put("hashcode", hashCode);
-				}else {
-					paramMap.put("hashcode", "01cd8cce69b5315d787baeda98cb6911");
-				}
-				paramMap.put("utteranceRaw",utteranceRaw);
-
-				JSONObject jsonObject = ApiClient.request_post(UrlConstant.HOST_URL_TS, paramMap);
-				if(jsonObject == null){
-					return null;
-				}
-
-				HashMap<String, String> parameters = new HashMap<>();
-				ArrayList<String> hashcodeList = new ArrayList<>();
-				ArrayList<Integer> voteUpCntList = new ArrayList<>();
-				String ruleId = null;
-				String action = null;
-				String uttSeg = null;
-				int resultcode;
-				Command cmd = new Command();
-				try {
-					ruleId = jsonObject.getString("ruleid");
-					action = jsonObject.getString("action");
-					uttSeg = jsonObject.getString("utt_seg");
-					resultcode = jsonObject.getInt("resultcode");
-					cmd.setRuleId(ruleId);
-					cmd.setAction(action);
-					cmd.setUttSeg(uttSeg);
-					cmd.setResultCode(resultcode);
-
-					if(RuleId.RULE_ID_1.equals(ruleId) || RuleId.RULE_ID_0.equals(ruleId)){
-						JSONArray hashcodeArray = jsonObject.getJSONArray("hashcodelist");
-						for(int i=0;i<hashcodeArray.length();i++){
-							hashcodeList.add(hashcodeArray.getString(i));
-						}
-						JSONArray voteUpCntArray = jsonObject.getJSONArray("voteupcnt_list");
-						for(int i=0;i<voteUpCntArray.length();i++){
-							voteUpCntList.add(voteUpCntArray.getInt(i));
-						}
-						cmd.setHashCodeList(hashcodeList);
-						cmd.setVoteUpCntList(voteUpCntList);
-
-						HashMap<String, Boolean> extra = new HashMap<>();
-						extra.put("isTagMatched", jsonObject.getBoolean("isTagMatched"));
-						extra.put("isTagPartialMatched", jsonObject.getBoolean("isTagPartialMatched"));
-						cmd.setExtra(extra);
-					}
-
-//					Log.i(TAG, "parameters="+parameters.toString());
-//					Log.i(TAG, "ruleId="+ruleId);
-//					Log.i(TAG, "action="+action);
-//					Log.i(TAG, "hashcodeList="+hashcodeList.toString());
-//					Log.i(TAG, "resultcode="+resultcode);
-
-					JSONObject paramsJsonObj = jsonObject.getJSONObject("parameters");
-					Iterator<String> iterator = paramsJsonObj.keys();
-					while (iterator.hasNext()){
-						String key = iterator.next();
-						String value = paramsJsonObj.getString(key);
-						parameters.put(key, value);
-					}
-					cmd.setParams(parameters);
-				}catch (Exception e){
-					Log.e(TAG, "error="+e.toString());
-				}
-				return cmd;
+				return requestCommand(params[0]);
 			}
 
 			@Override
@@ -307,7 +233,7 @@ public class ApiClient {
 				super.onPostExecute(cmd);
 				boolean handled = false;
 				if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
-					Toast.makeText(AppContext.appContext, "Command:"+ cmd.toString(), Toast.LENGTH_SHORT).show();
+					//Toast.makeText(AppContext.appContext, "Command:"+ cmd.toString(), Toast.LENGTH_SHORT).show();
 					handled = CommandExecutor.getInstance(AppContext.appContext).execute(cmd);
 				}else{
 					Toast.makeText(AppContext.appContext, "服务器异常!!!", Toast.LENGTH_SHORT).show();
@@ -321,6 +247,84 @@ public class ApiClient {
 		};
 		mRequestTask.executeOnExecutor(THREAD_POOL_EXECUTOR, utt);
 	}
+	public static Command requestCommand(String utteranceRaw){
+		if(TextUtils.isEmpty(utteranceRaw)){
+			return null;
+		}
+		HashMap<String, Object> paramMap = new HashMap<>();
+		paramMap.put("model", "tagger");
+		paramMap.put("context", "pseudo_root");
+		String hashCode = SmartWallpaperHelper.getCurHashCode();
+		if(!TextUtils.isEmpty(hashCode)){
+			paramMap.put("hashcode", hashCode);
+		}else {
+			paramMap.put("hashcode", "01cd8cce69b5315d787baeda98cb6911");
+		}
+		paramMap.put("utteranceRaw",utteranceRaw);
+
+		JSONObject jsonObject = ApiClient.request_post(UrlConstant.HOST_URL_TS, paramMap);
+		if(jsonObject == null){
+			return null;
+		}
+
+		HashMap<String, String> parameters = new HashMap<>();
+		ArrayList<String> hashcodeList = new ArrayList<>();
+		ArrayList<Integer> voteUpCntList = new ArrayList<>();
+		String ruleId = null;
+		String action = null;
+		String uttSeg = null;
+		int resultcode;
+		Command cmd = new Command();
+		try {
+			ruleId = jsonObject.getString("ruleid");
+			action = jsonObject.getString("action");
+			uttSeg = jsonObject.getString("utt_seg");
+			resultcode = jsonObject.getInt("resultcode");
+			cmd.setRuleId(ruleId);
+			cmd.setAction(action);
+			cmd.setUttSeg(uttSeg);
+			cmd.setResultCode(resultcode);
+
+			if(RuleId.RULE_ID_1.equals(ruleId) || RuleId.RULE_ID_0.equals(ruleId)){
+				JSONArray hashcodeArray = jsonObject.getJSONArray("hashcodelist");
+				for(int i=0;i<hashcodeArray.length();i++){
+					hashcodeList.add(hashcodeArray.getString(i));
+				}
+				JSONArray voteUpCntArray = jsonObject.getJSONArray("voteupcnt_list");
+				for(int i=0;i<voteUpCntArray.length();i++){
+					voteUpCntList.add(voteUpCntArray.getInt(i));
+				}
+				cmd.setHashCodeList(hashcodeList);
+				cmd.setVoteUpCntList(voteUpCntList);
+
+				HashMap<String, Boolean> extra = new HashMap<>();
+				extra.put("isTagMatched", jsonObject.getBoolean("isTagMatched"));
+				extra.put("isTagPartialMatched", jsonObject.getBoolean("isTagPartialMatched"));
+				cmd.setExtra(extra);
+			}
+
+//					Log.i(TAG, "parameters="+parameters.toString());
+//					Log.i(TAG, "ruleId="+ruleId);
+//					Log.i(TAG, "action="+action);
+//					Log.i(TAG, "hashcodeList="+hashcodeList.toString());
+//					Log.i(TAG, "resultcode="+resultcode);
+
+			JSONObject paramsJsonObj = jsonObject.getJSONObject("parameters");
+			if(paramsJsonObj != null) {
+				Iterator<String> iterator = paramsJsonObj.keys();
+				while (iterator.hasNext()) {
+					String key = iterator.next();
+					String value = paramsJsonObj.getString(key);
+					parameters.put(key, value);
+				}
+			}
+			cmd.setParams(parameters);
+		}catch (Exception e){
+			Log.e(TAG, "error="+e.toString());
+		}
+		return cmd;
+	}
+
 
 	//手动点赞
 	public synchronized static boolean voteUpWallpaper(String hashcode){
@@ -331,12 +335,15 @@ public class ApiClient {
 		String api_url = VOTEUP_WALLPAPER_URL + hashcode;
 		try {
 			JSONObject jsonObject = ApiClient.request_get(api_url);
-			String errno = jsonObject.getString("errno");
-			if("0".equals(errno)){
-				return true;
+			if(jsonObject != null) {
+				String errno = jsonObject.getString("errno");
+				if ("0".equals(errno)) {
+					return true;
+				}
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
+			Log.d(TAG, "voteUpWallpaper-error="+e.toString());
 		}
 		return false;
 	}
@@ -388,12 +395,14 @@ public class ApiClient {
 		String errmsg = null;
 		try{
 			JSONObject jsonObj = ApiClient.request_get(api_url);
-			errno = jsonObj.getInt("errno");
-			errmsg = jsonObj.getString("errmsg");
-			if(errno == 0) {
-				String file_path = jsonObj.getString("file_path");
-				String file_name = jsonObj.getString("file_name");
-				return file_path + File.separator + file_name;
+			if(jsonObj != null) {
+				errno = jsonObj.getInt("errno");
+				errmsg = jsonObj.getString("errmsg");
+				if (errno == 0) {
+					String file_path = jsonObj.getString("file_path");
+					String file_name = jsonObj.getString("file_name");
+					return file_path + File.separator + file_name;
+				}
 			}
 		}catch (Exception e) {
 			Log.e(TAG, "getWallpaperFIlePathByHashCode-error="+e.toString());
@@ -409,11 +418,13 @@ public class ApiClient {
 		String errmsg = null;
 		try{
 			JSONObject jsonObj = ApiClient.request_get(api_url);
-			errno = jsonObj.getInt("errno");
-			errmsg = jsonObj.getString("errmsg");
-			if(errno == 0) {
-				int voteUpCount = jsonObj.getInt("voteup_count");
-				return voteUpCount;
+			if(jsonObj != null) {
+				errno = jsonObj.getInt("errno");
+				errmsg = jsonObj.getString("errmsg");
+				if (errno == 0) {
+					int voteUpCount = jsonObj.getInt("voteup_count");
+					return voteUpCount;
+				}
 			}
 		}catch (Exception e) {
 			Log.e(TAG, "getVoteUpCount-error="+e.toString());

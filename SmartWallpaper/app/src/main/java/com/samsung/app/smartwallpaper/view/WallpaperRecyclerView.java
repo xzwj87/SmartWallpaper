@@ -3,7 +3,6 @@ package com.samsung.app.smartwallpaper.view;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -45,6 +44,9 @@ public class WallpaperRecyclerView extends RecyclerView{
                 downTime = event.getEventTime();
                 break;
             case MotionEvent.ACTION_UP:
+                if(mCb != null) {
+                    mCb.onTouchUp();
+                }
                 latestX = event.getX();
                 latestY = event.getY();
                 diffX = latestX - touchDownX;
@@ -68,6 +70,7 @@ public class WallpaperRecyclerView extends RecyclerView{
 
     public interface CallBack{
         void onSwipe(boolean fromLtoR);
+        void onTouchUp();
     }
 
     public void setCallBack(CallBack cb){
