@@ -86,6 +86,7 @@ public class ChangeWallpaperService extends JobService {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 Command cmd;
+                ArrayList<String> hashCodeList;
                 switch (msg.what) {
                     case MSG_LOAD_DONE:
                         isLoadDone = true;
@@ -96,18 +97,29 @@ public class ChangeWallpaperService extends JobService {
                         mCameraSound.play(MediaActionSound.SHUTTER_CLICK);
                         mHandler.removeMessages(MSG_SENSOR_SHAKE);
                         mHandler.removeMessages(MSG_TRIGGER_CHANGE);
-                        cmd = ApiClient.requestCommand("换张壁纸");
-                        if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
-                            ArrayList<String> hashCodeList = cmd.getHashCodeList();
-                            if(hashCodeList !=null && hashCodeList.size() >0) {
-                                Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
-                                if(wallpaper != null){
-                                    SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
-                                    SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
-                                    return;
-                                }
+
+                        hashCodeList = ApiClient.searchWallpaperWithHotKeywords(new ArrayList<String>(AppContext.userTagList));
+                        if(hashCodeList != null && hashCodeList.size() > 0){
+                            Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
+                            if(wallpaper != null){
+                                SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
+                                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
+                                return;
                             }
                         }
+//                        cmd = ApiClient.requestCommand("换张壁纸");
+//                        if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
+//                            ArrayList<String> hashCodeList = cmd.getHashCodeList();
+//                            if(hashCodeList !=null && hashCodeList.size() >0) {
+//                                Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
+//                                if(wallpaper != null){
+//                                    SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
+//                                    SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
+//                                    return;
+//                                }
+//                            }
+//                        }
+
                         if(mWallpaperItems.size() > 0) {
                             Log.d(TAG, "randomIndex="+randomIndex);
                             WallpaperItem wallpaperItem = mWallpaperItems.get(randomPosList.get(randomIndex % mWallpaperItems.size()));
@@ -121,18 +133,29 @@ public class ChangeWallpaperService extends JobService {
                         break;
                     case MSG_TRIGGER_CHANGE:
                         mHandler.removeMessages(MSG_TRIGGER_CHANGE);
-                        cmd = ApiClient.requestCommand("换张壁纸");
-                        if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
-                            ArrayList<String> hashCodeList = cmd.getHashCodeList();
-                            if(hashCodeList !=null && hashCodeList.size() >0) {
-                                Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
-                                if(wallpaper != null){
-                                    SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
-                                    SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
-                                    return;
-                                }
+
+                        hashCodeList = ApiClient.searchWallpaperWithHotKeywords(new ArrayList<String>(AppContext.userTagList));
+                        if(hashCodeList != null && hashCodeList.size() > 0){
+                            Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
+                            if(wallpaper != null){
+                                SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
+                                SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
+                                return;
                             }
                         }
+
+//                        cmd = ApiClient.requestCommand("换张壁纸");
+//                        if(cmd != null && !TextUtils.isEmpty(cmd.getAction())) {
+//                            ArrayList<String> hashCodeList = cmd.getHashCodeList();
+//                            if(hashCodeList !=null && hashCodeList.size() >0) {
+//                                Bitmap wallpaper = ApiClient.getWallpaperByHashCode(hashCodeList.get(0));
+//                                if(wallpaper != null){
+//                                    SmartWallpaperHelper.setCurHashCode(hashCodeList.get(0));
+//                                    SmartWallpaperHelper.getInstance(mContext).setHomeScreenWallpaper(wallpaper);
+//                                    return;
+//                                }
+//                            }
+//                        }
                         if(mWallpaperItems.size() > 0) {
                             Log.d(TAG, "curPos="+curPos);
                             WallpaperItem wallpaperItem = mWallpaperItems.get(curPos % mWallpaperItems.size());

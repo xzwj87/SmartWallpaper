@@ -46,7 +46,7 @@ public class SmartWallpaperHelper {
     private PendingIntent pi = null;
     private Bitmap curWallpaper = null;
     private Bitmap previousWallpaper = null;
-    private static String curHashCode = null;
+    private static String curHashCode = "0";
 
     private static SmartWallpaperHelper mSmartWallpaperManager = null;
     public static SmartWallpaperHelper getInstance(Context context){
