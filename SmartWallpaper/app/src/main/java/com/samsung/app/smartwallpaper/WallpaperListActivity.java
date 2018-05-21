@@ -199,6 +199,14 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             String tags = tag1 + " " + (tag2==null? "":tag2)  + " " +  (tag3==null? "":tag3);
             tags = tags.replace("  "," ").trim();
 //            tv_title.setText(String.format(getResources().getString(R.string.tag_search_result),tags));
+            AppContext.userTagList.add(tag1);
+            if(!TextUtils.isEmpty(tag2)){
+                AppContext.userTagList.add(tag2);
+            }
+            if(!TextUtils.isEmpty(tag3)){
+                AppContext.userTagList.add(tag3);
+            }
+
             searchbox.setText(tags);
         }else{//用户没有说 关键词
             if(cmd != null) {
@@ -254,6 +262,13 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         Log.i(TAG,"onDestroy");
+
+        if(AppContext.userTagList != null &&  AppContext.userTagList.size() > 0) {
+            SharedPreferences sp = AppContext.appContext.getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putStringSet("user_tag_set", AppContext.userTagList);
+            editor.apply();
+        }
         super.onDestroy();
 //        if(ASRDialog.getASRDialogInstance() != null) {
 //            ASRDialog.getASRDialogInstance().start();
@@ -348,6 +363,12 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         ib_voteup_icon.setOnClickListener(this);
         tv_apply.setOnClickListener(this);
         ib_share.setOnClickListener(this);
+        tv_voteup_count.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ib_voteup_icon.callOnClick();
+            }
+        });
 
         mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -410,7 +431,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     public void updateSwitchState(){
         SharedPreferences sp = AppContext.appContext.getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
         boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
-        boolean enableShakeListen = sp.getBoolean("enableShakeListen", false);
+        boolean enableShakeListen = sp.getBoolean("enableShakeListen", true);
         sw_schedulewallpaper.setChecked(enableChangeWallpaper);
         sw_shakeswitch.setChecked(enableShakeListen);
     }
@@ -644,52 +665,19 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                 super.onPreExecute();
                 ll_nextbatch.setEnabled(false);
             }
-
             @Override
             protected ArrayList<Object> doInBackground(String... params) {
                 String tag1 = params[0];
                 String tag2 = params[1];
                 String tag3 = params[2];
-
-                ArrayList<String> tagList = new ArrayList<>();
-                if (!TextUtils.isEmpty(tag1)) {
-                    tagList.add(tag1);
-                }
-                if (!TextUtils.isEmpty(tag2)) {
-                    tagList.add(tag2);
-                }
-                if (!TextUtils.isEmpty(tag3)) {
-                    tagList.add(tag3);
-                }
-
-                HashMap<String, Object> paramMap = new HashMap<>();
-                paramMap.put("current_hashcode", "0");
-                paramMap.put("tag_list", tagList);
-                paramMap.put("top_count", 10);
-
-                JSONObject jsonObject = ApiClient.request_post(UrlConstant.SEARCH_WALLPAPER_URL, paramMap);
-                try {
-                    int resultcode = jsonObject.getInt("response_code");
-                    if (resultcode == 200) {
-                        ArrayList<String> hashcodeList = new ArrayList<>();
-                        ArrayList<Integer> voteupcntList = new ArrayList<>();
-                        JSONArray hashcodeArray = jsonObject.getJSONArray("result");
-                        for (int i = 0; i < hashcodeArray.length(); i++) {
-                            hashcodeList.add(hashcodeArray.getString(i));
-                        }
-                        JSONArray voteupcntArray = jsonObject.getJSONArray("voteupcnt_list");
-                        for (int i = 0; i < voteupcntArray.length(); i++) {
-                            voteupcntList.add(voteupcntArray.getInt(i));
-                        }
-                        ArrayList<Object> lst = new ArrayList<>();
-                        lst.add(hashcodeList);
-                        lst.add(voteupcntList);
-                        return lst;
+                ArrayList<String> exclude_hashcode_list = null;
+                if(mWallpaperItems != null && mWallpaperItems.size() > 0){
+                    exclude_hashcode_list = new ArrayList<>();
+                    for(WallpaperItem item:mWallpaperItems){
+                        exclude_hashcode_list.add(item.getHashCode());//本批次已显示过的hashcode
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "error=" + e.toString());
                 }
-                return null;
+                return ApiClient.searchWallpaperByKeywords(tag1, tag2, tag3, exclude_hashcode_list);
             }
 
             @Override

@@ -27,7 +27,9 @@ public class UrlConstant {
     public final static String DOWNLOAD_WALLPAPER_URL = HOST_URL_WRS + "api/downloadwallpaper/hashcode=";
     public final static String VOTEUP_WALLPAPER_URL = HOST_URL_WRS + "api/voteupwallpaper/hashcode=";
     public final static String SEARCH_WALLPAPER_URL = HOST_URL_WRS + "api/searchwallpaper";
+    public final static String SEARCH_WALLPAPER_WITH_HOT_KEYWORDS_URL = HOST_URL_WRS + "api/searchwallpaperwithhotkeywords";
     public final static String UPLOAD_WALLPAPER_URL = HOST_URL_WRS + "api/uploadwallpaper";
+    public final static String UPLOAD_USER_BEHAVIOR_URL = HOST_URL_WRS + "api/uploaduserbehavior/keywords=%s&behavior_type=%d";
 
     public final static String HOST_URL_VERSION = HOST_URL_WRS + "checkversion";
 }
