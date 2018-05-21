@@ -1,7 +1,9 @@
 package com.samsung.app.smartwallpaper;
 
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Handler;
 
@@ -17,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.util.ArraySet;
 import android.util.Log;
 
 import static com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService.JOB_ID_TIMER;
@@ -24,7 +27,8 @@ import static com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService.JO
 public class AppContext extends Application{
 	private static final String TAG = "AppContext";
 	public static Context appContext;
-	
+	public static Set<String> userTagList;
+
 	@Override
 	public void onCreate() {
 		Log.d(TAG, "onCreate");
@@ -48,7 +52,7 @@ public class AppContext extends Application{
 
 		SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
 		boolean enableChangeWallpaper = sp.getBoolean("enableScheduleChangeWallpaper", false);
-		boolean enableShakeListen = sp.getBoolean("enableShakeListen", false);
+		boolean enableShakeListen = sp.getBoolean("enableShakeListen", true);
 
 		if(ChangeWallpaperService.useJobScheduler()) {
 			if (enableChangeWallpaper) {
@@ -69,6 +73,11 @@ public class AppContext extends Application{
 			startService(intent);
 		}
 		ChangeWallpaperService.enableShakeListen(enableShakeListen, true);
+
+		userTagList = sp.getStringSet("user_tag_set", null);
+		if(userTagList == null){
+			userTagList = new ArraySet<>();
+		}
 	}
 
 	/**

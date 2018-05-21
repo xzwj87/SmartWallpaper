@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -42,6 +43,7 @@ import android.widget.Toast;
 import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_FILE_PATH_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_VOTEUP_COUNT_URL;
+import static com.samsung.app.smartwallpaper.config.UrlConstant.UPLOAD_USER_BEHAVIOR_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.UPLOAD_WALLPAPER_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.VOTEUP_WALLPAPER_URL;
 
@@ -208,6 +210,7 @@ public class ApiClient {
 		return jsonResult;
 	}
 
+	//以语句方式进行搜索（TS--->WRS)
 	private static AsyncTask<String, Void, Command> mRequestTask = null;
 	public synchronized static void requestTS(String utt){
 		Log.i(TAG, "requestTS-utt="+utt);
@@ -325,6 +328,76 @@ public class ApiClient {
 		return cmd;
 	}
 
+	//按用户提供的关键字进行搜索
+	public static ArrayList<Object> searchWallpaperByKeywords(String tag1, String tag2, String tag3, ArrayList<String> exclude_hashcode_list){
+		ArrayList<String> tagList = new ArrayList<>();
+		if (!TextUtils.isEmpty(tag1)) {
+			tagList.add(tag1);
+		}
+		if (!TextUtils.isEmpty(tag2)) {
+			tagList.add(tag2);
+		}
+		if (!TextUtils.isEmpty(tag3)) {
+			tagList.add(tag3);
+		}
+
+		HashMap<String, Object> paramMap = new HashMap<>();
+		paramMap.put("current_hashcode", SmartWallpaperHelper.getCurHashCode());
+		if(exclude_hashcode_list != null && exclude_hashcode_list.size() > 0) {
+			paramMap.put("exclude_hashcode_list", exclude_hashcode_list);
+		}
+		paramMap.put("tag_list", tagList);
+		paramMap.put("top_count", 10);
+
+		JSONObject jsonObject = ApiClient.request_post(UrlConstant.SEARCH_WALLPAPER_URL, paramMap);
+		try {
+			int resultcode = jsonObject.getInt("response_code");
+			if (resultcode == 200) {
+				ArrayList<String> hashcodeList = new ArrayList<>();
+				ArrayList<Integer> voteupcntList = new ArrayList<>();
+				JSONArray hashcodeArray = jsonObject.getJSONArray("result");
+				for (int i = 0; i < hashcodeArray.length(); i++) {
+					hashcodeList.add(hashcodeArray.getString(i));
+				}
+				JSONArray voteupcntArray = jsonObject.getJSONArray("voteupcnt_list");
+				for (int i = 0; i < voteupcntArray.length(); i++) {
+					voteupcntList.add(voteupcntArray.getInt(i));
+				}
+				ArrayList<Object> lst = new ArrayList<>();
+				lst.add(hashcodeList);
+				lst.add(voteupcntList);
+				return lst;
+			}
+		} catch (Exception e) {
+			Log.e(TAG, "error=" + e.toString());
+		}
+		return null;
+	}
+
+	//结合用户行为记录及热词榜，进行搜索推荐
+	public static ArrayList<String> searchWallpaperWithHotKeywords(ArrayList<String> user_tag_list){
+		HashMap<String, Object> paramMap = new HashMap<>();
+		paramMap.put("current_hashcode", SmartWallpaperHelper.getCurHashCode());
+		paramMap.put("user_tag_list", user_tag_list);
+		paramMap.put("top_count", 5);
+
+		JSONObject jsonObject = ApiClient.request_post(UrlConstant.SEARCH_WALLPAPER_WITH_HOT_KEYWORDS_URL, paramMap);
+		try {
+			int resultcode = jsonObject.getInt("response_code");
+			if (resultcode == 200) {
+				ArrayList<String> hashcodeList = new ArrayList<>();
+				ArrayList<Integer> voteupcntList = new ArrayList<>();
+				JSONArray hashcodeArray = jsonObject.getJSONArray("result");
+				for (int i = 0; i < hashcodeArray.length(); i++) {
+					hashcodeList.add(hashcodeArray.getString(i));
+				}
+				return hashcodeList;
+			}
+		} catch (Exception e) {
+			Log.e(TAG, "error=" + e.toString());
+		}
+		return null;
+	}
 
 	//手动点赞
 	public synchronized static boolean voteUpWallpaper(String hashcode){
@@ -434,6 +507,34 @@ public class ApiClient {
 		return 0;
 	}
 
+	//发送用户行为
+	public enum BEHAVIOR_TYPE{
+		TOUCH,
+		SEARCH
+	}
+	public static boolean sendUserBehavior(String keywords, BEHAVIOR_TYPE type){
+		String api_url = String.format(Locale.CHINESE, UPLOAD_USER_BEHAVIOR_URL, keywords, type.ordinal());
+		int errno;
+		String errmsg = null;
+		try{
+			JSONObject jsonObj = ApiClient.request_get(api_url);
+			if(jsonObj != null) {
+				errno = jsonObj.getInt("errno");
+				errmsg = jsonObj.getString("errmsg");
+				if (errno == 0) {
+					return true;
+				}
+			}
+		}catch (Exception e) {
+			Log.e(TAG, "sendUserBehavior-error="+e.toString());
+			e.printStackTrace();
+		}
+		Log.e(TAG, "sendUserBehavior-errmsg="+errmsg);
+		return false;
+	}
+
+
+
 	private static final int TIME_OUT = 10*10000000; //超时时间
 	private static final String CHARSET = "utf-8"; //设置编码
 	private static String BOUNDARY = "FlPm4LpSXsE" ; //UUID.randomUUID().toString(); //边界标识 随机生成 String PREFIX = "--" , LINE_END = "\r\n";
@@ -509,5 +610,7 @@ public class ApiClient {
 		}
 		return null;
 	}
+
+
 }
 

@@ -192,8 +192,8 @@
             android:paddingBottom="8dp">
             <ImageButton
                 android:id="@+id/ib_voteup_icon"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginStart="8dp"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentBottom="true"
@@ -210,11 +210,11 @@
                 android:layout_alignBottom="@+id/ib_voteup_icon"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                android:textSize="14sp"/>
+                android:textSize="16sp"/>
             <ImageButton
                 android:id="@+id/ib_favorite"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_toEndOf="@+id/tv_voteup_count"
                 android:layout_alignParentBottom="true"
                 android:layout_marginStart="8dp"
@@ -237,7 +237,7 @@
                 android:text="应用"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                android:textSize="18sp"/>
+                android:textSize="20sp"/>
         </RelativeLayout>
         <ImageButton
             android:id="@+id/ib_share"
@@ -258,6 +258,6 @@
             android:text="1/10"
             android:textColor="@android:color/white"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="20sp"/>
     </FrameLayout>
 </FrameLayout>
