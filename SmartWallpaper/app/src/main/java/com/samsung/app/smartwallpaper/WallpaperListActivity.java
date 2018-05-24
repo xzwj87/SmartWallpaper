@@ -2,6 +2,7 @@ package com.samsung.app.smartwallpaper;
 
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +21,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -48,6 +50,7 @@ import com.samsung.app.smartwallpaper.utils.PopupWindowHelper;
 import com.samsung.app.smartwallpaper.view.DragPhotoView;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.SearchBox;
+import com.samsung.app.smartwallpaper.view.TagContainer;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
 import com.samsung.app.smartwallpaper.wallpaper.CameraLiveWallpaper;
 import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
@@ -83,6 +86,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
     private TextView tv_title;
     private SearchBox searchbox;
+    private TagContainer tag_container;
     private ImageButton ib_favorite;
     private ImageButton ib_close;
     private TextView tv_hint;
@@ -286,6 +290,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
         tv_title = (TextView)findViewById(R.id.tv_title);
         searchbox = (SearchBox)findViewById(R.id.searchbox);
+        tag_container = (TagContainer)findViewById(R.id.tag_container);
         ib_favorite = (ImageButton)findViewById(R.id.ib_favorite);
         ib_close = (ImageButton)findViewById(R.id.ib_close);
         tv_hint = (TextView)findViewById(R.id.tv_hint);
@@ -339,6 +344,8 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
                     Intent intent = new Intent(mContext, FavoriteListActivity.class);
                     mContext.startActivity(intent);
                 }
+                tag_container.setVisibility(View.GONE);
+                searchbox.clearFocus();
             }
 
             @Override
@@ -348,6 +355,10 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 //                Handler handler = new Handler();
 //                handler.removeCallbacks(mRunnable);
 //                handler.postDelayed(mRunnable, 5000);
+
+                tag_container.setVisibility(View.GONE);
+                searchbox.clearFocus();
+
             }
         });
         mWallpaperRecyclerView.addItemDecoration(new SpaceItemDecoration(0));
@@ -386,12 +397,14 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
 
             }
         });
+        tag_container.setVisibility(View.GONE);
         searchbox.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if(actionId == EditorInfo.IME_ACTION_DONE){
                     String keywords = searchbox.getText().toString();
                     searchByKeywords(keywords, null, null);
+                    tag_container.setVisibility(View.GONE);
                     searchbox.clearFocus();
                     return true;
                 }
@@ -403,6 +416,7 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             public void onClick(View v) {
                 String keywords = searchbox.getText().toString();
                 searchByKeywords(keywords, null, null);
+                tag_container.setVisibility(View.GONE);
                 searchbox.clearFocus();
             }
         });
@@ -426,7 +440,77 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         item_about.setOnClickListener(this);
 
         updateSwitchState();
+        loadTags();
     }
+
+    private final static String[] preload_tags = new String[]{"美女","性感","跑车","星空","帅哥","简单","创意","搞笑","励志","风景","节日","卡通","S8","S9","Note8","曲面屏","跑马灯"};
+    public void loadTags(){
+        new AsyncTask<String, Void, ArrayList<String>>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                tag_container.removeAllViews();
+            }
+            @Override
+            protected ArrayList<String> doInBackground(String... params) {
+                ArrayList<String> tagList = new ArrayList<>();
+                if(AppContext.userTagList != null && AppContext.userTagList.size() > 0){
+                    tagList.addAll(0, AppContext.userTagList);
+                }
+
+                ArrayList<String> hotKeywordsList = ApiClient.getHotKeywords(10);
+                if(hotKeywordsList != null && hotKeywordsList.size() > 0){
+                    for(String keywords:hotKeywordsList){
+                        if(!tagList.contains(keywords)){
+                            tagList.add(keywords);
+                        }
+                    }
+                }
+
+                if(tagList.size() < 15){
+                    ArrayList<String> preload_tag_list = new ArrayList<>();
+                    for(String tag : preload_tags) {
+                        preload_tag_list.add(tag);
+                    }
+                    for(String tag: preload_tag_list){
+                        if(!tagList.contains(tag)){
+                            tagList.add(tag);
+                        }
+                    }
+                }
+
+                Collections.shuffle(tagList);
+                return tagList;
+            }
+
+            @Override
+            protected void onPostExecute(ArrayList<String> tagList) {
+                super.onPostExecute(tagList);
+                for(int i=0;i<tagList.size();i++){
+                    if(!TextUtils.isEmpty(tagList.get(i))) {
+                        TextView tagView = new TextView(mContext);
+                        tagView.setText(tagList.get(i));
+                        tagView.setBackgroundResource(R.drawable.tag_shape);
+                        tagView.setOnClickListener(tagViewClickListener);
+                        tag_container.addView(tagView);
+                    }
+                }
+            }
+        }.executeOnExecutor(THREAD_POOL_EXECUTOR);
+    }
+
+    View.OnClickListener tagViewClickListener = new View.OnClickListener(){
+
+        @Override
+        public void onClick(View v) {
+            String tag = ((TextView)v).getText().toString();
+            searchbox.setText(tag);
+            tag_container.setVisibility(View.GONE);
+            searchbox.clearFocus();
+            searchByKeywords(tag, null, null);
+        }
+    };
+
 
     public void updateSwitchState(){
         SharedPreferences sp = AppContext.appContext.getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
@@ -451,7 +535,16 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
         }else {
             ib_favorite.setImageResource(R.drawable.favorite_off);
         }
-        tv_voteup_count.setText(wallpaperItem.getVoteupCount() + "赞");
+        int voteup_cnt = wallpaperItem.getVoteupCount();
+        String voteup_text = null;
+        if(voteup_cnt >= 0 && voteup_cnt < 10000) {
+            voteup_text = wallpaperItem.getVoteupCount() + "赞";
+        }else if(voteup_cnt >= 10000){
+            voteup_text = String.format("%1$.1f", wallpaperItem.getVoteupCount()/10000.0f) + "万赞";
+        }else{
+            voteup_text = "0赞";
+        }
+        tv_voteup_count.setText(voteup_text);
         tv_index.setText(String.format("%d/%d", position+1, mWallpaperItems.size()));
 
         updateAlpha(1.0f);
@@ -770,6 +863,17 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if(ev.getAction() == MotionEvent.ACTION_DOWN) {
+            if (searchbox.hasFocus()) {
+                searchbox.clearFocus();
+//                tag_container.setVisibility(View.GONE);
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
         boolean consumed = super.onTouchEvent(event);
 //        if(!consumed) {
@@ -810,6 +914,13 @@ public class WallpaperListActivity extends Activity implements View.OnClickListe
             hideWallpaperPreview();
             return;
         }
+
+        if(searchbox.hasFocus()){
+            searchbox.clearFocus();
+            tag_container.setVisibility(View.GONE);
+            return;
+        }
+
         super.onBackPressed();
     }
 

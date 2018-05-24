@@ -280,22 +280,21 @@ public class ChangeWallpaperService extends JobService {
     public static void createJobAndSchedule(int id){
         Log.i(TAG, "createJobAndSchedule-id="+id);
         JobScheduler jobScheduler = (JobScheduler) AppContext.appContext.getSystemService(JOB_SCHEDULER_SERVICE);
-        jobScheduler.cancel(id);
-        JobInfo jobInfo = null;
-        switch (id){
-            case JOB_ID_TIMER:
-                jobInfo = new JobInfo.Builder(JOB_ID_TIMER, new ComponentName(AppContext.appContext, ChangeWallpaperService.class))
-                        .setPeriodic(15*60*1000, 60 * 1000)
+        int JOB_CNT = 15;
+        for(int i=0;i<JOB_CNT;i++) {
+            jobScheduler.cancel(JOB_ID_TIMER + i);
+        }
+
+        for(int i=0;i<JOB_CNT;i++) {
+            JobInfo jobInfo  = new JobInfo.Builder(JOB_ID_TIMER+i, new ComponentName(AppContext.appContext, ChangeWallpaperService.class))
+                        .setPeriodic((15+i)*60*1000, 60 * 1000)
 //                        .setPeriodic(15000, 15000)
 //                        .setOverrideDeadline(15000)
 //                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                         .setPersisted(true) //重启后是否还要继续执行
                         .build();
-                break;
-        }
-        if(jobInfo != null) {
             jobScheduler.schedule(jobInfo);
-            Log.i(TAG, "jobScheduler.schedule");
+            Log.i(TAG, "jobScheduler.schedule-i="+i);
         }
     }
 
@@ -305,20 +304,16 @@ public class ChangeWallpaperService extends JobService {
         startForeground(0, new Notification());
         SharedPreferences sp;
         SharedPreferences.Editor editor;
-        switch (params.getJobId()){
-            case JOB_ID_TIMER:
-                if(mWallpaperItems == null || mWorkerThread == null){
-                    init(AppContext.appContext);
-                }
-                if (enableScheduleRunning && mWallpaperItems.size() > 0 && !shouldIgnore()) {
-                    mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+        if(mWallpaperItems == null || mWorkerThread == null){
+            init(AppContext.appContext);
+        }
+        if (enableScheduleRunning && mWallpaperItems.size() > 0 && !shouldIgnore()) {
+            mHandler.removeMessages(MSG_TRIGGER_CHANGE);
 //                    mHandler.sendEmptyMessage(MSG_TRIGGER_CHANGE);
-                    mHandler.sendMessage(Message.obtain( mHandler, MSG_TRIGGER_CHANGE, params));
-                }else{
-                    mHandler.removeMessages(MSG_TRIGGER_CHANGE);
-                    jobFinished(params, false);
-                }
-                break;
+            mHandler.sendMessage(Message.obtain( mHandler, MSG_TRIGGER_CHANGE, params));
+        }else{
+            mHandler.removeMessages(MSG_TRIGGER_CHANGE);
+            jobFinished(params, false);
         }
         return true;
     }

@@ -10,6 +10,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import com.samsung.app.smartwallpaper.R;
+
 
 /**
  * Created by samsung on 2018/5/14.
@@ -63,8 +65,10 @@ public class SearchBox extends EditText implements View.OnFocusChangeListener, T
     public void onFocusChange(View v, boolean hasFocus) {
         if(hasFocus){
             setCursorVisible(true);
+            v.getRootView().findViewById(R.id.tag_container).setVisibility(View.VISIBLE);
         }else{
             setCursorVisible(false);
+//            v.getRootView().findViewById(R.id.tag_container).setVisibility(View.GONE);
             InputMethodManager im = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             im.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }

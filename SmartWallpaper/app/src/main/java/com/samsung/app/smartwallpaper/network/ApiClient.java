@@ -41,6 +41,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import static android.os.AsyncTask.THREAD_POOL_EXECUTOR;
+import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_HOT_KEYWORDS_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_FILE_PATH_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.GET_WALLPAPER_VOTEUP_COUNT_URL;
 import static com.samsung.app.smartwallpaper.config.UrlConstant.UPLOAD_USER_BEHAVIOR_URL;
@@ -395,6 +396,32 @@ public class ApiClient {
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "error=" + e.toString());
+		}
+		return null;
+	}
+
+	//获取前N个热词
+	public static ArrayList<String> getHotKeywords(int top_cnt){
+		if(top_cnt <= 0){
+			return null;
+		}
+		String api_url = GET_HOT_KEYWORDS_URL + top_cnt;
+		try {
+			JSONObject jsonObject = ApiClient.request_get(api_url);
+			if(jsonObject != null) {
+				String errno = jsonObject.getString("errno");
+				if ("0".equals(errno)) {
+					ArrayList<String> hot_keywords_list = new ArrayList<>();
+					JSONArray hotkeywordsArray = jsonObject.getJSONArray("hot_keywords_list");
+					for (int i = 0; i < hotkeywordsArray.length(); i++) {
+						hot_keywords_list.add(hotkeywordsArray.getString(i));
+					}
+					return hot_keywords_list;
+				}
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+			Log.d(TAG, "getHotKeywords-error="+e.toString());
 		}
 		return null;
 	}
