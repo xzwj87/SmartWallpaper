@@ -78,6 +78,13 @@ public class AppContext extends Application{
 		if(userTagList == null){
 			userTagList = new ArraySet<>();
 		}
+
+		initExceptionHandler();
+	}
+
+
+	private void initExceptionHandler() {
+		Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 	}
 
 	/**

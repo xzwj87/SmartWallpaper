@@ -122,7 +122,9 @@ public class FileUtil {
     public static File creatSDDir(String dir)
     {
         File dirFile = new File(SDCardRoot + dir + File.separator);
-        dirFile.mkdirs();
+        if (!dirFile.exists()) {
+            dirFile.mkdirs();
+        }
         return dirFile;
     }
 
