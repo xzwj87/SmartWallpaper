@@ -25,8 +25,18 @@ public class ExceptionHandler implements Thread.UncaughtExceptionHandler {
     private static final String CRASH_LOG = "CrashLog";
 
     @Override
-    public void uncaughtException(Thread t, Throwable e) {
+    public void uncaughtException(Thread t, final Throwable e) {
         Log.e(TAG,"uncaughtException(): thread=" + t.getName());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveCrashLog(e);
+            }
+        }).start();
+
+    }
+
+    private void saveCrashLog(Throwable e) {
         if (PermisionUtil.hasStoragePermissions(AppContext.appContext)) {
             String dir =  APP_NAME + File.separator + CRASH_LOG;
             File dirFile = FileUtil.creatSDDir(dir);
